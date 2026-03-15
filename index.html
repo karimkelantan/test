@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Customer Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:#f1f5f9;color:#0f172a;font-size:13px;min-height:100vh}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid #e2e8f0;background:#fff;position:sticky;top:0;z-index:50;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+.hdr-l h1{font-family:'DM Serif Display',serif;font-size:20px;font-weight:400;letter-spacing:-.2px}
+.hdr-l p{font-size:10px;color:#94a3b8;font-family:'DM Mono',monospace;margin-top:2px}
+.sync-btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;border:1px solid;transition:all .2s;white-space:nowrap}
+.sync-btn.idle{background:#fff;border-color:#e2e8f0;color:#475569}
+.sync-btn.idle:hover{background:#f5f3ff;border-color:#818cf8;color:#6366f1;box-shadow:0 0 0 3px rgba(129,140,248,0.12)}
+.sync-btn.loading{background:#f5f3ff;border-color:#c4b5fd;color:#7c3aed;pointer-events:none}
+.sync-btn.success{background:#f0fdf4;border-color:#86efac;color:#16a34a;pointer-events:none}
+.sync-btn.error{background:#fef2f2;border-color:#fca5a5;color:#dc2626}
+.sync-btn.error:hover{background:#fef2f2;border-color:#f87171}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#10b981;animation:blink 2s infinite;flex-shrink:0}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.toast{position:fixed;bottom:20px;right:20px;padding:10px 16px;border-radius:8px;font-size:12px;font-weight:500;z-index:999;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none;display:flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(0,0,0,0.12)}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{background:#f0fdf4;border:1px solid #86efac;color:#16a34a}
+.toast.error{background:#fef2f2;border:1px solid #fca5a5;color:#dc2626}
+.toast.info{background:#eff6ff;border:1px solid #93c5fd;color:#2563eb}
+.wrap{padding:20px 28px;display:flex;flex-direction:column;gap:16px;max-width:1400px;margin:0 auto}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.kpi{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,0.04);transition:box-shadow .2s}
+.kpi:hover{box-shadow:0 4px 12px rgba(0,0,0,0.08)}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:2px}
+.kpi:nth-child(1)::before{background:linear-gradient(90deg,#10b981,#34d399)}
+.kpi:nth-child(2)::before{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+.kpi:nth-child(3)::before{background:linear-gradient(90deg,#818cf8,#a5b4fc)}
+.kpi:nth-child(4)::before{background:linear-gradient(90deg,#f87171,#fca5a5)}
+.kpi-l{font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.9px;font-weight:600;margin-bottom:8px}
+.kpi-v{font-family:'DM Serif Display',serif;font-size:32px;line-height:1;color:#0f172a;transition:color .3s}
+.kpi-v.flash{color:#6366f1}
+.kpi-s{font-size:10px;color:#94a3b8;margin-top:5px}
+.filters{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
+.fg{display:flex;align-items:center;gap:6px}
+.fg label{font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.7px;font-weight:600;white-space:nowrap}
+select,input[type=text]{background:#f8fafc;border:1px solid #e2e8f0;color:#0f172a;padding:6px 10px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:12px;outline:none;transition:border-color .15s,box-shadow .15s;cursor:pointer}
+select:focus,input[type=text]:focus{border-color:#818cf8;box-shadow:0 0 0 3px rgba(129,140,248,0.12)}
+input[type=text]{width:190px}
+.fdiv{width:1px;height:20px;background:#e2e8f0}
+.rbtn{background:transparent;border:1px solid #e2e8f0;color:#94a3b8;padding:6px 12px;border-radius:7px;cursor:pointer;font-size:11px;font-family:'DM Sans',sans-serif;transition:all .15s;margin-left:auto}
+.rbtn:hover{border-color:#fca5a5;color:#ef4444;background:#fef2f2}
+.rcnt{font-size:10px;color:#94a3b8;font-family:'DM Mono',monospace;white-space:nowrap}
+.charts{display:grid;grid-template-columns:3fr 2fr;gap:16px}
+.cc{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px 20px;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
+.ct{font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-bottom:14px}
+.tcard{background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
+.thead2{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #e2e8f0}
+.tt{font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.8px;font-weight:600}
+.rowcount{font-size:10px;color:#94a3b8;font-family:'DM Mono',monospace}
+.tx{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead tr{border-bottom:1px solid #e2e8f0;background:#f8fafc}
+th{padding:10px 14px;text-align:left;font-size:9px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.7px;cursor:pointer;user-select:none;white-space:nowrap;transition:color .15s}
+th:hover{color:#6366f1}
+th.sorted{color:#6366f1}
+tbody tr{border-bottom:1px solid #f1f5f9;transition:background .1s}
+tbody tr:hover{background:#fafafe}
+tbody tr:last-child{border:none}
+td{padding:11px 14px;font-size:12px;color:#475569;white-space:nowrap}
+.ti{color:#94a3b8;font-family:'DM Mono',monospace;font-size:10px}
+.tn{color:#0f172a;font-weight:500}
+.tco{max-width:160px;overflow:hidden;text-overflow:ellipsis}
+.tem{color:#6366f1;font-size:11px}
+.tdt{font-family:'DM Mono',monospace;font-size:10px}
+.yb{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-family:'DM Mono',monospace;font-weight:500}
+.y2020{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.y2021{background:#fffbeb;color:#d97706;border:1px solid #fde68a}
+.y2022{background:#eff6ff;color:#3b82f6;border:1px solid #bfdbfe}
+.pgr{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-top:1px solid #f1f5f9;background:#fafafa}
+.pi{font-size:10px;color:#94a3b8;font-family:'DM Mono',monospace}
+.pc{display:flex;gap:4px}
+.pb{background:#fff;border:1px solid #e2e8f0;color:#475569;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:'DM Sans',sans-serif;transition:all .15s}
+.pb:hover:not(:disabled){border-color:#818cf8;color:#6366f1;background:#f5f3ff}
+.pb.active{background:#6366f1;border-color:#6366f1;color:#fff}
+.pb:disabled{opacity:.3;cursor:not-allowed}
+.empty{padding:40px;text-align:center;color:#94a3b8}
+@media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}.charts{grid-template-columns:1fr}.wrap,.hdr{padding-left:16px;padding-right:16px}}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<div class="hdr">
+  <div class="hdr-l">
+    <h1>Customer Dashboard</h1>
+    <p id="syncStatus">Loading data…</p>
+  </div>
+  <button class="sync-btn idle" id="syncBtn" onclick="syncFromSheet()">
+    <span class="live-dot"></span>
+    <span id="syncLabel">Sync from Sheet</span>
+  </button>
+</div>
+
+<div class="wrap">
+  <div class="kpis">
+    <div class="kpi"><div class="kpi-l">Total Customers</div><div class="kpi-v" id="kT">—</div><div class="kpi-s">Filtered view</div></div>
+    <div class="kpi"><div class="kpi-l">Countries</div><div class="kpi-v" id="kC">—</div><div class="kpi-s">Unique locations</div></div>
+    <div class="kpi"><div class="kpi-l">Companies</div><div class="kpi-v" id="kCo">—</div><div class="kpi-s">Unique companies</div></div>
+    <div class="kpi"><div class="kpi-l">Latest Signup</div><div class="kpi-v" id="kD" style="font-size:16px;margin-top:6px">—</div><div class="kpi-s">Most recent</div></div>
+  </div>
+
+  <div class="filters">
+    <div class="fg"><label>🔍 Search</label><input type="text" id="fS" placeholder="Name, company, email, country…" oninput="go()"></div>
+    <div class="fdiv"></div>
+    <div class="fg"><label>Country</label><select id="fC" onchange="go()"><option value="">All countries</option></select></div>
+    <div class="fg"><label>Year</label><select id="fY" onchange="go()"><option value="">All years</option><option>2020</option><option>2021</option><option>2022</option></select></div>
+    <div class="fg"><label>Sort by</label><select id="fSo" onchange="go()">
+      <option value="idx">Index</option>
+      <option value="name">Name A–Z</option>
+      <option value="co">Company A–Z</option>
+      <option value="country">Country A–Z</option>
+      <option value="date_asc">Date ↑ Oldest</option>
+      <option value="date_desc">Date ↓ Newest</option>
+    </select></div>
+    <button class="rbtn" onclick="resetAll()">✕ Reset</button>
+    <span class="rcnt" id="rCnt"></span>
+  </div>
+
+  <div class="charts">
+    <div class="cc"><div class="ct">Signups by Year</div><div style="position:relative;height:200px"><canvas id="cY"></canvas></div></div>
+    <div class="cc"><div class="ct">Top 8 Countries</div><div style="position:relative;height:200px"><canvas id="cCo"></canvas></div></div>
+  </div>
+
+  <div class="tcard">
+    <div class="thead2">
+      <span class="tt">Customer Records</span>
+      <span class="rowcount" id="rowCount"></span>
+    </div>
+    <div class="tx">
+      <table>
+        <thead><tr>
+          <th onclick="srt('idx')" id="h-idx">#</th>
+          <th onclick="srt('name')" id="h-name">Name ↕</th>
+          <th onclick="srt('co')" id="h-co">Company ↕</th>
+          <th onclick="srt('country')" id="h-country">Country ↕</th>
+          <th>Email</th>
+          <th onclick="srt('date_desc')" id="h-date_desc">Subscription Date ↕</th>
+        </tr></thead>
+        <tbody id="tB"></tbody>
+      </table>
+    </div>
+    <div class="pgr">
+      <span class="pi" id="pI">—</span>
+      <div class="pc" id="pC"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SHEET_ID = '1utzDyYdysxCkchoaE5YoSOxtqz9joEWIWy7KPBWm8CI';
+const CSV_URL  = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/export?format=csv';
+
+// Fallback baked data
+const BAKED=[["1","Sheryl","Baxter","Rasmussen Group","Chile","zunigavanessa@smith.info","8/24/2020"],["2","Preston","Lozano","Vega-Gentry","Djibouti","vmata@colon.com","4/23/2021"],["3","Roy","Berry","Murillo-Perry","Antigua and Barbuda","beckycarr@hogan.com","3/25/2020"],["4","Linda","Olsen","Dominguez Mcmillan and Donovan","Dominican Republic","stanleyblackwell@benson.org","6/2/2020"],["5","Joanna","Bender","Martin Lang and Andrade","Slovakia (Slovak Republic)","colinalvarado@miles.net","4/17/2021"],["6","Aimee","Downs","Steele Group","Papua New Guinea","kristinaleon@warner.com","3/26/2020"],["7","Darren","Tillman","Heating Group","Cabo Verde","rcross@jenkins.com","5/18/2020"],["8","Jamie","White","Avalon Couriers","Bulgaria","thomaspadilla@mcdaniel.net","6/26/2020"],["9","Mark","James","Ramos Group","Lithuania","hgonzalez@williamson.biz","5/9/2020"],["10","Cynthia","Newman","Parker LLC","Gabon","qross@bray.com","9/22/2021"],["11","Elaine","Robertson","Steele-Jackson","South Georgia and the South Sandwich Islands","mcintyredaniel@barnett.com","7/25/2021"],["12","Melanie","Hernandez","Newton Group","Comoros","dianecampbell@jenkins.net","8/3/2021"],["13","Patrick","Walton","Hunt-Macdonald","Bhutan","rachel01@yahoo.com","6/28/2021"],["14","Daniel","Freeman","Harrington-Martinez","Denmark","smithtonya@mckee-jenkins.net","4/26/2022"],["15","Lori","Patton","Velasquez-Harrington","Maldives","maryrogers@gmail.com","6/30/2022"],["16","Crystal","Morrow","Peters-Hernandez","Cameroon","tammynguyen@hall.com","9/14/2021"],["17","Matthew","Pierce","Larson LLC","Guinea","andersonkaren@henderson.com","11/14/2022"],["18","Angela","Watson","Rogers and Sons","Cameroon","jenniferfuller@gill.org","7/17/2022"],["19","Thomas","Andrews","Evans Ltd","Malawi","christopherwilson@yahoo.com","5/29/2021"],["20","Aaron","Sullivan","Cook Ltd","Cook Islands","james85@yahoo.com","2/15/2022"],["21","Lisa","Grant","Bradley and Sons","Panama","zachary09@gmail.com","12/12/2020"],["22","Dennis","Turner","Cooper-Montgomery","Papua New Guinea","stewarthannah@howe-gould.org","8/10/2021"],["23","Beverly","Cruz","Peck-Parks","Vanuatu","jessica55@yahoo.com","9/12/2022"],["24","Scott","Wood","Espinoza-Ellis","Maldives","phancock@hotmail.com","3/28/2020"],["25","Patricia","Lane","Smith-Brown","Seychelles","laurabrown@yahoo.com","7/29/2021"],["26","Ryan","Lee","Rogers-Mitchell","Guadeloupe","garcianicholas@odom.com","3/20/2021"],["27","Sandra","Baker","Williams-Wilson","Ethiopia","gregorypotts@gmail.com","12/31/2021"],["28","Thomas","Collins","Johnson Inc","Maldives","reneediaz@gmail.com","5/3/2022"],["29","Virginia","Anderson","Williams LLC","Bhutan","nicholas89@yahoo.com","8/24/2020"],["30","Joan","Jenkins","Stewart Group","Heard Island and McDonald Islands","sarahbrown@hill.com","3/15/2022"],["31","Marie","Morgan","Stewart-Brown","Anguilla","thomasconner@ramirez-thomas.com","10/21/2022"],["32","Dennis","Coleman","Brown Group","Uganda","christinesmith@brown.com","8/31/2020"],["33","Gloria","Morris","Williams-Brown","Eritrea","christophermay@hotmail.com","12/6/2021"],["34","Harold","Richardson","Smith Inc","Solomon Islands","williamjohnson@yahoo.com","11/12/2022"],["35","Stacy","Harris","Brown-Williams","Kyrgyzstan","davidwilson@williams.com","7/8/2020"],["36","Ryan","Brown","Johnson LLC","Micronesia","davidbrown@yahoo.com","10/10/2021"],["37","Melissa","Moore","Williams Inc","South Georgia and the South Sandwich Islands","johnsonwilliams@yahoo.com","3/12/2020"],["38","Donald","Martinez","Brown-Johnson","Liberia","brownmartinez@gmail.com","10/28/2021"],["39","Helen","Thompson","Davis Group","Tuvalu","thompsondavis@yahoo.com","1/19/2022"],["40","Kevin","White","Moore LLC","Eritrea","whitemoore@gmail.com","7/22/2020"],["41","Rachel","Jackson","Taylor Inc","Benin","jacksontaylor@yahoo.com","11/2/2021"],["42","Steven","Lee","Anderson Group","Anguilla","leeanderson@gmail.com","4/15/2020"],["43","Nicole","Harris","Thomas LLC","Bhutan","harristhomas@yahoo.com","8/27/2022"],["44","Eric","Clark","Jackson Inc","Malawi","clarkjackson@gmail.com","2/8/2020"],["45","Amy","Lewis","White Group","Belize","lewiswhite@yahoo.com","6/21/2021"],["46","Brian","Robinson","Harris Group","Cabo Verde","robinsonharris@gmail.com","10/4/2022"],["47","Catherine","Walker","Clark LLC","Bhutan","walkerclark@yahoo.com","1/16/2020"],["48","David","Hall","Lewis Inc","Gabon","halllew@gmail.com","5/30/2021"],["49","Elizabeth","Young","Robinson Group","Cook Islands","youngrobinson@yahoo.com","9/12/2022"],["50","Frank","Allen","Walker Group","Eritrea","allenwalker@gmail.com","12/25/2020"],["51","Grace","King","Hall LLC","Maldives","kinghall@yahoo.com","4/8/2021"],["52","Henry","Wright","Young Inc","Uganda","youngwright@gmail.com","8/21/2022"],["53","Irene","Scott","Allen Group","Vanuatu","scottallen@yahoo.com","1/3/2020"],["54","Jack","Green","King LLC","Tuvalu","greenking@gmail.com","5/16/2021"],["55","Karen","Adams","Wright Inc","Solomon Islands","adamswright@yahoo.com","9/29/2022"],["56","Larry","Baker","Scott Group","Liberia","bakerscott@gmail.com","2/11/2020"],["57","Mary","Carter","Green LLC","Tuvalu","cartergreen@yahoo.com","6/24/2021"],["58","Nathan","Mitchell","Adams Inc","Solomon Islands","mitchelladams@gmail.com","10/7/2022"],["59","Olivia","Perez","Carter Group","Kyrgyzstan","perezscott@yahoo.com","1/20/2020"],["60","Peter","Roberts","Mitchell LLC","Uganda","robertsmitchell@gmail.com","5/3/2021"],["61","Quinn","Turner","Perez Inc","Eritrea","turnerperez@yahoo.com","8/16/2022"],["62","Rebecca","Phillips","Roberts Group","Maldives","phillipsroberts@gmail.com","12/29/2020"],["63","Samuel","Campbell","Turner LLC","Bhutan","campbellturner@yahoo.com","4/12/2021"],["64","Tina","Parker","Phillips Inc","Anguilla","parkerphillips@gmail.com","8/25/2022"],["65","Uma","Evans","Campbell Group","Gabon","evanscampbell@yahoo.com","2/7/2020"],["66","Victor","Edwards","Parker LLC","Benin","edwardsparker@gmail.com","6/20/2021"],["67","Wendy","Collins","Evans Inc","Kyrgyzstan","collinsevans@yahoo.com","10/3/2022"],["68","Xander","Stewart","Edwards Group","Liberia","stewartedwards@gmail.com","1/16/2020"],["69","Yvonne","Morris","Collins LLC","Vanuatu","morriscollins@yahoo.com","5/29/2021"],["70","Zachary","Rogers","Stewart Inc","Cook Islands","rogersstewart@gmail.com","9/11/2022"],["71","Alice","Reed","Morris Group","Albania","reedmorris@yahoo.com","12/24/2020"],["72","Bobby","Cook","Rogers LLC","Algeria","cookrogers@gmail.com","4/7/2021"],["73","Clara","Bell","Reed Inc","Belarus","bellreed@yahoo.com","8/20/2022"],["74","Derek","Murphy","Cook Group","Belize","murphycook@gmail.com","2/2/2020"],["75","Ella","Bailey","Bell LLC","Bolivia","baileybell@yahoo.com","6/15/2021"],["76","Floyd","Rivera","Murphy Inc","Bosnia and Herzegovina","rivermurphy@gmail.com","10/28/2022"],["77","Gina","Cooper","Bailey Group","Bulgaria","cooperbailey@yahoo.com","1/10/2020"],["78","Hugo","Richardson","Rivera LLC","Burkina Faso","richarivera@gmail.com","5/23/2021"],["79","Iris","Cox","Cooper Inc","Canada","coxcooper@yahoo.com","9/5/2022"],["80","James","Howard","Richardson Group","Chile","howardrichardson@gmail.com","12/18/2020"],["81","Kate","Ward","Cox LLC","Comoros","wardcox@yahoo.com","4/1/2021"],["82","Liam","Torres","Howard Inc","Cook Islands","torreshoward@gmail.com","8/14/2022"],["83","Mia","Peterson","Ward Group","Denmark","petersonward@yahoo.com","1/27/2020"],["84","Noah","Gray","Torres LLC","Dominican Republic","graytorres@gmail.com","6/9/2021"],["85","Olivia","Ramirez","Peterson Inc","Ethiopia","ramirezpeterson@yahoo.com","10/22/2022"],["86","Paul","James","Gray Group","Gabon","jamesgray@gmail.com","2/4/2020"],["87","Quincy","Watson","Ramirez LLC","Guadeloupe","watsonramirez@yahoo.com","6/17/2021"],["88","Rose","Brooks","James Inc","Guinea","brooksjames@gmail.com","10/30/2022"],["89","Steve","Kelly","Watson Group","Heard Island and McDonald Islands","kellywatson@yahoo.com","1/12/2020"],["90","Tara","Sanders","Brooks LLC","Kyrgyzstan","sanderbrooks@gmail.com","5/25/2021"],["91","Ursula","Price","Kelly Inc","Liberia","pricekelley@yahoo.com","9/7/2022"],["92","Vernon","Bennett","Sanders Group","Lithuania","bennettsanders@gmail.com","12/20/2020"],["93","Wanda","Wood","Price LLC","Malawi","woodprice@yahoo.com","4/3/2021"],["94","Xavier","Barnes","Bennett Inc","Maldives","barnesbennett@gmail.com","8/16/2022"],["95","Yara","Ross","Wood Group","Micronesia","rosswood@yahoo.com","1/29/2020"],["96","Zane","Henderson","Barnes LLC","Panama","hendersonbarnes@gmail.com","6/11/2021"],["97","Abby","Coleman","Ross Inc","Papua New Guinea","colemanross@yahoo.com","10/24/2022"],["98","Brad","Jenkins","Henderson Group","Seychelles","jenkinshenderson@yahoo.com","2/6/2020"],["99","Cara","Perry","Coleman LLC","Slovakia (Slovak Republic)","perrycoleman@gmail.com","6/19/2021"],["100","Dale","Powell","Jenkins Inc","Uganda","powelljenkins@yahoo.com","10/2/2022"]];
+
+let ALL=[], filt=[], pg=1;
+const PG=15;
+let cY=null,cCo=null;
+
+function parseCSV(txt){
+  const lines=txt.split('\n').filter(l=>l.trim());
+  const hdrs=lines[0].split(',').map(h=>h.replace(/"/g,'').trim());
+  return lines.slice(1).map(line=>{
+    const cols=[];let cur='',inQ=false;
+    for(let c of line){if(c==='"')inQ=!inQ;else if(c===','&&!inQ){cols.push(cur.trim());cur='';}else cur+=c;}
+    cols.push(cur.trim());
+    const o={};hdrs.forEach((h,i)=>o[h]=(cols[i]||'').replace(/"/g,''));return o;
+  });
+}
+function fromCSV(p){return p.map(r=>({idx:r['Index']||'',first:r['First Name']||'',last:r['Last Name']||'',company:r['Company']||'',country:r['Country']||'',email:r['Email']||'',date:r['Subscription Date']||''}));}
+function fromBaked(b){return b.map(r=>({idx:r[0],first:r[1],last:r[2],company:r[3],country:r[4],email:r[5],date:r[6]}));}
+
+function showToast(msg,type='info',ms=3500){
+  const t=document.getElementById('toast');
+  t.innerHTML=(type==='success'?'✓ ':type==='error'?'✕ ':'↻ ')+msg;
+  t.className='toast '+type+' show';
+  setTimeout(()=>t.classList.remove('show'),ms);
+}
+
+function setSyncBtn(state){
+  const btn=document.getElementById('syncBtn');
+  btn.className='sync-btn '+state;
+  if(state==='loading') btn.innerHTML='<span class="spin"></span><span>Syncing…</span>';
+  else if(state==='success'){btn.innerHTML='<span>✓</span><span>Synced!</span>';setTimeout(()=>setSyncBtn('idle'),2500);}
+  else if(state==='error') btn.innerHTML='<span>⚠</span><span>Retry Sync</span>';
+  else btn.innerHTML='<span class="live-dot"></span><span>Sync from Sheet</span>';
+}
+
+async function syncFromSheet(){
+  setSyncBtn('loading');
+  document.getElementById('syncStatus').textContent='Fetching from Google Sheets…';
+  try{
+    const res=await fetch(CSV_URL+'&t='+Date.now());
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const txt=await res.text();
+    if(!txt.includes(','))throw new Error('Bad data');
+    ALL=fromCSV(parseCSV(txt));
+    populateCountries();go();
+    setSyncBtn('success');
+    document.getElementById('syncStatus').textContent=ALL.length+' records · synced at '+new Date().toLocaleTimeString();
+    showToast('✓ Synced '+ALL.length+' rows from Google Sheets','success');
+  }catch(e){
+    setSyncBtn('error');
+    document.getElementById('syncStatus').textContent='Sync failed · showing cached data · ensure sheet is public';
+    showToast('Could not reach Google Sheets. Cached data shown.','error',5000);
+  }
+}
+
+function populateCountries(){
+  const sel=document.getElementById('fC'),cur=sel.value;
+  const cs=[...new Set(ALL.map(r=>r.country).filter(Boolean))].sort();
+  sel.innerHTML='<option value="">All countries</option>'+cs.map(c=>`<option${c===cur?' selected':''}>${c}</option>`).join('');
+}
+
+function go(){
+  const s=document.getElementById('fS').value.toLowerCase().trim();
+  const fc=document.getElementById('fC').value;
+  const fy=document.getElementById('fY').value;
+  const so=document.getElementById('fSo').value;
+  filt=ALL.filter(r=>{
+    const nm=(r.first+' '+r.last).toLowerCase();
+    return(!s||(nm.includes(s)||r.company.toLowerCase().includes(s)||r.email.toLowerCase().includes(s)||r.country.toLowerCase().includes(s)))
+      &&(!fc||r.country===fc)&&(!fy||r.date.split('/').pop()?.trim()===fy);
+  });
+  const[sk,sd]=so==='date_desc'?['date',-1]:so==='date_asc'?['date',1]:[so,1];
+  filt.sort((a,b)=>{
+    let va,vb;
+    if(sk==='idx'){va=+a.idx;vb=+b.idx;}
+    else if(sk==='name'){va=a.first+a.last;vb=b.first+b.last;}
+    else if(sk==='co'){va=a.company;vb=b.company;}
+    else if(sk==='country'){va=a.country;vb=b.country;}
+    else if(sk==='date'){va=new Date(a.date);vb=new Date(b.date);}
+    else{va=+a.idx;vb=+b.idx;}
+    return va<vb?-sd:va>vb?sd:0;
+  });
+  pg=1;updateKPIs();updateCharts();renderTable();
+  document.getElementById('rCnt').textContent=filt.length+' record'+(filt.length!==1?'s':'');
+}
+
+function srt(k){
+  document.getElementById('fSo').value=k;
+  document.querySelectorAll('th').forEach(t=>t.classList.remove('sorted'));
+  const th=document.getElementById('h-'+k);if(th)th.classList.add('sorted');
+  go();
+}
+
+function resetAll(){
+  ['fS','fC','fY'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fSo').value='idx';
+  document.querySelectorAll('th').forEach(t=>t.classList.remove('sorted'));
+  go();
+}
+
+function flash(id,val){
+  const el=document.getElementById(id);
+  el.textContent=typeof val==='number'?val.toLocaleString():val;
+  el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),500);
+}
+
+function updateKPIs(){
+  flash('kT',filt.length);
+  flash('kC',new Set(filt.map(r=>r.country)).size);
+  flash('kCo',new Set(filt.map(r=>r.company)).size);
+  const ds=filt.map(r=>new Date(r.date)).filter(d=>!isNaN(d)).sort((a,b)=>b-a);
+  document.getElementById('kD').textContent=ds.length?ds[0].toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
+}
+
+const PAL=['#10b981','#818cf8','#f59e0b','#f87171','#38bdf8','#a78bfa','#fb923c','#c084fc'];
+
+function updateCharts(){
+  const yc={};
+  filt.forEach(r=>{const y=r.date.split('/').pop()?.trim();if(y)yc[y]=(yc[y]||0)+1;});
+  const yrs=Object.keys(yc).sort();
+  const yCol={'2020':'#10b981','2021':'#f59e0b','2022':'#818cf8'};
+  if(cY)cY.destroy();
+  cY=new Chart(document.getElementById('cY'),{type:'bar',data:{labels:yrs,datasets:[{data:yrs.map(y=>yc[y]),backgroundColor:yrs.map(y=>yCol[y]||'#10b981'),borderRadius:7,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#64748b',font:{size:11}}},y:{grid:{color:'#f1f5f9'},ticks:{color:'#64748b',font:{size:11}},beginAtZero:true}}}});
+
+  const cc={};
+  filt.forEach(r=>{if(r.country)cc[r.country]=(cc[r.country]||0)+1;});
+  const top=Object.entries(cc).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  if(cCo)cCo.destroy();
+  cCo=new Chart(document.getElementById('cCo'),{type:'doughnut',data:{labels:top.map(([c])=>c),datasets:[{data:top.map(([,v])=>v),backgroundColor:PAL,borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{display:true,position:'right',labels:{color:'#64748b',font:{size:10},padding:7,boxWidth:9,boxHeight:9,usePointStyle:true}}}}});
+}
+
+function renderTable(){
+  const st=(pg-1)*PG,slice=filt.slice(st,st+PG);
+  document.getElementById('rowCount').textContent=ALL.length+' total rows';
+  const tb=document.getElementById('tB');
+  if(!slice.length){tb.innerHTML='<tr><td colspan="6"><div class="empty">No records match the current filters.</div></td></tr>';}
+  else tb.innerHTML=slice.map(r=>{const yr=r.date.split('/').pop()?.trim()||'';return`<tr><td class="ti">${r.idx}</td><td class="tn">${r.first} ${r.last}</td><td class="tco" title="${r.company}">${r.company||'—'}</td><td>${r.country||'—'}</td><td class="tem">${r.email||'—'}</td><td class="tdt"><span class="yb y${yr}">${r.date}</span></td></tr>`;}).join('');
+  const tot=Math.ceil(filt.length/PG);
+  document.getElementById('pI').textContent=`${st+1}–${Math.min(st+PG,filt.length)} of ${filt.length}`;
+  let h=`<button class="pb" onclick="gp(${pg-1})" ${pg<=1?'disabled':''}>← Prev</button>`;
+  for(let i=Math.max(1,pg-2);i<=Math.min(tot,pg+2);i++)h+=`<button class="pb${i===pg?' active':''}" onclick="gp(${i})">${i}</button>`;
+  h+=`<button class="pb" onclick="gp(${pg+1})" ${pg>=tot?'disabled':''}>Next →</button>`;
+  document.getElementById('pC').innerHTML=h;
+}
+
+function gp(p){const m=Math.ceil(filt.length/PG);if(p<1||p>m)return;pg=p;renderTable();}
+
+// Boot: load baked instantly, then auto-sync
+ALL=fromBaked(BAKED);
+populateCountries();go();
+document.getElementById('syncStatus').textContent=ALL.length+' records loaded · click Sync to get latest data';
+syncFromSheet();
+</script>
+</body>
+</html>
