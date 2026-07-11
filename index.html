@@ -1,320 +1,815 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Customer Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:#f1f5f9;color:#0f172a;font-size:13px;min-height:100vh}
-.hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid #e2e8f0;background:#fff;position:sticky;top:0;z-index:50;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
-.hdr-l h1{font-family:'DM Serif Display',serif;font-size:20px;font-weight:400;letter-spacing:-.2px}
-.hdr-l p{font-size:10px;color:#94a3b8;font-family:'DM Mono',monospace;margin-top:2px}
-.sync-btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;border:1px solid;transition:all .2s;white-space:nowrap}
-.sync-btn.idle{background:#fff;border-color:#e2e8f0;color:#475569}
-.sync-btn.idle:hover{background:#f5f3ff;border-color:#818cf8;color:#6366f1;box-shadow:0 0 0 3px rgba(129,140,248,0.12)}
-.sync-btn.loading{background:#f5f3ff;border-color:#c4b5fd;color:#7c3aed;pointer-events:none}
-.sync-btn.success{background:#f0fdf4;border-color:#86efac;color:#16a34a;pointer-events:none}
-.sync-btn.error{background:#fef2f2;border-color:#fca5a5;color:#dc2626}
-.sync-btn.error:hover{background:#fef2f2;border-color:#f87171}
-.spin{display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
-@keyframes spin{to{transform:rotate(360deg)}}
-.live-dot{width:6px;height:6px;border-radius:50%;background:#10b981;animation:blink 2s infinite;flex-shrink:0}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
-.toast{position:fixed;bottom:20px;right:20px;padding:10px 16px;border-radius:8px;font-size:12px;font-weight:500;z-index:999;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none;display:flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(0,0,0,0.12)}
-.toast.show{opacity:1;transform:translateY(0)}
-.toast.success{background:#f0fdf4;border:1px solid #86efac;color:#16a34a}
-.toast.error{background:#fef2f2;border:1px solid #fca5a5;color:#dc2626}
-.toast.info{background:#eff6ff;border:1px solid #93c5fd;color:#2563eb}
-.wrap{padding:20px 28px;display:flex;flex-direction:column;gap:16px;max-width:1400px;margin:0 auto}
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.kpi{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,0.04);transition:box-shadow .2s}
-.kpi:hover{box-shadow:0 4px 12px rgba(0,0,0,0.08)}
-.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:2px}
-.kpi:nth-child(1)::before{background:linear-gradient(90deg,#10b981,#34d399)}
-.kpi:nth-child(2)::before{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
-.kpi:nth-child(3)::before{background:linear-gradient(90deg,#818cf8,#a5b4fc)}
-.kpi:nth-child(4)::before{background:linear-gradient(90deg,#f87171,#fca5a5)}
-.kpi-l{font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.9px;font-weight:600;margin-bottom:8px}
-.kpi-v{font-family:'DM Serif Display',serif;font-size:32px;line-height:1;color:#0f172a;transition:color .3s}
-.kpi-v.flash{color:#6366f1}
-.kpi-s{font-size:10px;color:#94a3b8;margin-top:5px}
-.filters{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
-.fg{display:flex;align-items:center;gap:6px}
-.fg label{font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.7px;font-weight:600;white-space:nowrap}
-select,input[type=text]{background:#f8fafc;border:1px solid #e2e8f0;color:#0f172a;padding:6px 10px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:12px;outline:none;transition:border-color .15s,box-shadow .15s;cursor:pointer}
-select:focus,input[type=text]:focus{border-color:#818cf8;box-shadow:0 0 0 3px rgba(129,140,248,0.12)}
-input[type=text]{width:190px}
-.fdiv{width:1px;height:20px;background:#e2e8f0}
-.rbtn{background:transparent;border:1px solid #e2e8f0;color:#94a3b8;padding:6px 12px;border-radius:7px;cursor:pointer;font-size:11px;font-family:'DM Sans',sans-serif;transition:all .15s;margin-left:auto}
-.rbtn:hover{border-color:#fca5a5;color:#ef4444;background:#fef2f2}
-.rcnt{font-size:10px;color:#94a3b8;font-family:'DM Mono',monospace;white-space:nowrap}
-.charts{display:grid;grid-template-columns:3fr 2fr;gap:16px}
-.cc{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px 20px;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
-.ct{font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-bottom:14px}
-.tcard{background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
-.thead2{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #e2e8f0}
-.tt{font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.8px;font-weight:600}
-.rowcount{font-size:10px;color:#94a3b8;font-family:'DM Mono',monospace}
-.tx{overflow-x:auto}
-table{width:100%;border-collapse:collapse}
-thead tr{border-bottom:1px solid #e2e8f0;background:#f8fafc}
-th{padding:10px 14px;text-align:left;font-size:9px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.7px;cursor:pointer;user-select:none;white-space:nowrap;transition:color .15s}
-th:hover{color:#6366f1}
-th.sorted{color:#6366f1}
-tbody tr{border-bottom:1px solid #f1f5f9;transition:background .1s}
-tbody tr:hover{background:#fafafe}
-tbody tr:last-child{border:none}
-td{padding:11px 14px;font-size:12px;color:#475569;white-space:nowrap}
-.ti{color:#94a3b8;font-family:'DM Mono',monospace;font-size:10px}
-.tn{color:#0f172a;font-weight:500}
-.tco{max-width:160px;overflow:hidden;text-overflow:ellipsis}
-.tem{color:#6366f1;font-size:11px}
-.tdt{font-family:'DM Mono',monospace;font-size:10px}
-.yb{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-family:'DM Mono',monospace;font-weight:500}
-.y2020{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
-.y2021{background:#fffbeb;color:#d97706;border:1px solid #fde68a}
-.y2022{background:#eff6ff;color:#3b82f6;border:1px solid #bfdbfe}
-.pgr{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-top:1px solid #f1f5f9;background:#fafafa}
-.pi{font-size:10px;color:#94a3b8;font-family:'DM Mono',monospace}
-.pc{display:flex;gap:4px}
-.pb{background:#fff;border:1px solid #e2e8f0;color:#475569;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:'DM Sans',sans-serif;transition:all .15s}
-.pb:hover:not(:disabled){border-color:#818cf8;color:#6366f1;background:#f5f3ff}
-.pb.active{background:#6366f1;border-color:#6366f1;color:#fff}
-.pb:disabled{opacity:.3;cursor:not-allowed}
-.empty{padding:40px;text-align:center;color:#94a3b8}
-@media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}.charts{grid-template-columns:1fr}.wrap,.hdr{padding-left:16px;padding-right:16px}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anbel Car Rental</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e40af',
+                        'primary-dark': '#1e3a8a',
+                        accent: '#f59e0b',
+                        ocean: '#0ea5e9',
+                        'ocean-dark': '#0284c7',
+                        sand: '#fef3c7',
+                        tropical: '#059669',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        /* ===== LOADING SCREEN ===== */
+        #loader {
+            position: fixed; inset: 0; z-index: 9999;
+            background: linear-gradient(135deg, #1e3a8a, #0ea5e9);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+        #loader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .loader-boat { animation: loaderFloat 2s ease-in-out infinite; }
+        .loader-wave { animation: loaderWave 1.5s ease-in-out infinite; }
+        .loader-wave-2 { animation: loaderWave 1.5s ease-in-out infinite 0.3s; }
+        .loader-wave-3 { animation: loaderWave 1.5s ease-in-out infinite 0.6s; }
+        @keyframes loaderFloat { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-10px) rotate(2deg); } }
+        @keyframes loaderWave { 0%, 100% { transform: translateX(0) scaleY(1); } 50% { transform: translateX(20px) scaleY(1.3); } }
+
+        /* ===== NAVIGATION GLASSMORPHISM ===== */
+        #mainNav { transition: background 0.4s ease, box-shadow 0.4s ease, backdrop-filter 0.4s ease; }
+        #mainNav.scrolled { background: rgba(255,255,255,0.82); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); box-shadow: 0 4px 30px rgba(0,0,0,0.08); }
+        #mainNav.scrolled .nav-link { color: #374151; }
+        #mainNav.scrolled .nav-logo-text { color: #1e40af; }
+        #mainNav:not(.scrolled) .nav-link { color: rgba(255,255,255,0.85); }
+        #mainNav:not(.scrolled) .nav-link:hover { color: #ffffff; }
+        #mainNav:not(.scrolled) .nav-logo-text { color: #ffffff; }
+        #mainNav:not(.scrolled) .nav-logo-icon { color: #fbbf24; }
+        .nav-link { transition: color 0.3s ease; position: relative; }
+        .nav-link::after { content: ''; position: absolute; bottom: -4px; left: 0; width: 0; height: 2px; background: #f59e0b; transition: width 0.3s ease; border-radius: 2px; }
+        .nav-link:hover::after, .nav-link.active::after { width: 100%; }
+
+        /* ===== HERO ===== */
+        .hero-section { background: linear-gradient(160deg, #0f172a 0%, #1e3a8a 40%, #1e40af 60%, #2563eb 100%); overflow: hidden; position: relative; }
+        .hero-section::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 70% 20%, rgba(251,191,36,0.15) 0%, transparent 50%), radial-gradient(ellipse at 30% 80%, rgba(14,165,233,0.1) 0%, transparent 50%); pointer-events: none; }
+        .sun-glow { position: absolute; top: -100px; right: 10%; width: 400px; height: 400px; border-radius: 50%; background: radial-gradient(circle, rgba(251,191,36,0.25) 0%, rgba(251,191,36,0.08) 40%, transparent 70%); animation: sunPulse 6s ease-in-out infinite; pointer-events: none; }
+        @keyframes sunPulse { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.1); opacity: 1; } }
+        .cloud { position: absolute; pointer-events: none; opacity: 0.12; will-change: transform; }
+        .cloud-1 { top: 15%; left: -10%; animation: cloudDrift 35s linear infinite; }
+        .cloud-2 { top: 30%; left: -15%; animation: cloudDrift 50s linear infinite; animation-delay: -15s; }
+        .cloud-3 { top: 8%; left: -20%; animation: cloudDrift 42s linear infinite; animation-delay: -8s; }
+        @keyframes cloudDrift { 0% { transform: translateX(0); } 100% { transform: translateX(calc(100vw + 300px)); } }
+        .mist-particle { position: absolute; width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.3); pointer-events: none; animation: mistFloat linear infinite; }
+        @keyframes mistFloat { 0% { transform: translate(0, 0) scale(1); opacity: 0; } 10% { opacity: 0.6; } 90% { opacity: 0.6; } 100% { transform: translate(var(--mist-x, 100px), var(--mist-y, -80px)) scale(0.3); opacity: 0; } }
+        .palm-leaf { position: absolute; pointer-events: none; will-change: transform; animation: palmSway 4s ease-in-out infinite; transform-origin: bottom center; }
+        @keyframes palmSway { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(2deg); } 75% { transform: rotate(-1.5deg); } }
+        .hero-title { animation: heroTextIn 1s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both; }
+        .hero-subtitle { animation: heroTextIn 1s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both; }
+        .hero-buttons { animation: heroTextIn 1s cubic-bezier(0.16, 1, 0.3, 1) 0.6s both; }
+        @keyframes heroTextIn { from { opacity: 0; transform: translateY(30px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+        /* ===== WAVES ===== */
+        .wave-container { position: absolute; bottom: 0; left: 0; width: 100%; overflow: hidden; line-height: 0; }
+        .wave-svg { position: relative; width: calc(100% + 40px); margin-left: -20px; }
+        .wave-path-1 { animation: waveSlide 12s linear infinite; }
+        .wave-path-2 { animation: waveSlide 16s linear infinite reverse; }
+        .wave-path-3 { animation: waveSlide 20s linear infinite; }
+        @keyframes waveSlide { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        .section-wave { position: relative; height: 80px; overflow: hidden; margin-top: -1px; }
+        .section-wave svg { position: absolute; bottom: 0; width: 200%; min-width: 1440px; }
+        .section-wave .wave-anim-1 { animation: sectionWave 8s linear infinite; }
+        .section-wave .wave-anim-2 { animation: sectionWave 12s linear infinite reverse; opacity: 0.5; }
+        @keyframes sectionWave { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+        /* ===== SCROLL ANIMATIONS ===== */
+        .reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+        .reveal-left { opacity: 0; transform: translateX(-50px); transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
+        .reveal-left.visible { opacity: 1; transform: translateX(0); }
+        .reveal-right { opacity: 0; transform: translateX(50px); transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
+        .reveal-right.visible { opacity: 1; transform: translateX(0); }
+        .reveal-scale { opacity: 0; transform: scale(0.9); transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
+        .reveal-scale.visible { opacity: 1; transform: scale(1); }
+        .stagger-1 { transition-delay: 0.1s; } .stagger-2 { transition-delay: 0.18s; } .stagger-3 { transition-delay: 0.26s; }
+        .stagger-4 { transition-delay: 0.34s; } .stagger-5 { transition-delay: 0.42s; } .stagger-6 { transition-delay: 0.5s; }
+
+        /* ===== CAR CARD HOVER ===== */
+        .car-card { transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1); will-change: transform; }
+        .car-card:hover { transform: translateY(-8px); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15); }
+        .car-card .card-image { overflow: hidden; }
+        .car-card .card-image img { transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        .car-card:hover .card-image img { transform: scale(1.06); }
+        .car-card .price-badge { transition: transform 0.3s ease, background 0.3s ease; }
+        .car-card:hover .price-badge { transform: scale(1.05); background: #1e40af; color: white; }
+        .car-card .card-btn { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden; }
+        .car-card .card-btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent); opacity: 0; transition: opacity 0.3s ease; }
+        .car-card:hover .card-btn::before { opacity: 1; }
+
+        /* ===== BUTTON RIPPLE ===== */
+        .btn-ripple { position: relative; overflow: hidden; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .btn-ripple:hover { transform: translateY(-2px); }
+        .btn-ripple:active { transform: translateY(0) scale(0.98); }
+        .btn-ripple .ripple-effect { position: absolute; border-radius: 50%; background: rgba(255,255,255,0.35); transform: scale(0); animation: ripple 0.6s ease-out; pointer-events: none; }
+        @keyframes ripple { to { transform: scale(4); opacity: 0; } }
+
+        /* ===== MODAL ===== */
+        #carModal .modal-content { transform: scale(0.92) translateY(20px); opacity: 0; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease; }
+        #carModal.active .modal-content { transform: scale(1) translateY(0); opacity: 1; }
+
+        /* ===== GRADIENT TEXT ===== */
+        .gradient-text { background: linear-gradient(135deg, #fbbf24, #f59e0b, #0ea5e9, #1e40af); background-size: 300% 300%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: gradientShift 6s ease infinite; }
+        @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+        /* ===== DATE PICKERS ===== */
+        input[type="date"], input[type="time"] { color-scheme: light; }
+        input[type="date"]::-webkit-calendar-picker-indicator, input[type="time"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.6; }
+        input[type="date"]::-webkit-calendar-picker-indicator:hover, input[type="time"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+
+        /* ===== MOBILE MENU ===== */
+        #mobileMenu { transform: translateY(-100%); opacity: 0; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease; pointer-events: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 50; }
+        #mobileMenu.open { transform: translateY(0); opacity: 1; pointer-events: auto; }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; } ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        /* ===== REDUCED MOTION ===== */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+            .reveal, .reveal-left, .reveal-right, .reveal-scale { opacity: 1 !important; transform: none !important; }
+            html { scroll-behavior: auto; }
+        }
+    </style>
 </head>
-<body>
+<body class="bg-gray-50 font-sans">
 
-<div class="toast" id="toast"></div>
-
-<div class="hdr">
-  <div class="hdr-l">
-    <h1>Customer Dashboard</h1>
-    <p id="syncStatus">Loading data…</p>
-  </div>
-  <button class="sync-btn idle" id="syncBtn" onclick="syncFromSheet()">
-    <span class="live-dot"></span>
-    <span id="syncLabel">Sync from Sheet</span>
-  </button>
-</div>
-
-<div class="wrap">
-  <div class="kpis">
-    <div class="kpi"><div class="kpi-l">Total Customers</div><div class="kpi-v" id="kT">—</div><div class="kpi-s">Filtered view</div></div>
-    <div class="kpi"><div class="kpi-l">Countries</div><div class="kpi-v" id="kC">—</div><div class="kpi-s">Unique locations</div></div>
-    <div class="kpi"><div class="kpi-l">Companies</div><div class="kpi-v" id="kCo">—</div><div class="kpi-s">Unique companies</div></div>
-    <div class="kpi"><div class="kpi-l">Latest Signup</div><div class="kpi-v" id="kD" style="font-size:16px;margin-top:6px">—</div><div class="kpi-s">Most recent</div></div>
-  </div>
-
-  <div class="filters">
-    <div class="fg"><label>🔍 Search</label><input type="text" id="fS" placeholder="Name, company, email, country…" oninput="go()"></div>
-    <div class="fdiv"></div>
-    <div class="fg"><label>Country</label><select id="fC" onchange="go()"><option value="">All countries</option></select></div>
-    <div class="fg"><label>Year</label><select id="fY" onchange="go()"><option value="">All years</option><option>2020</option><option>2021</option><option>2022</option></select></div>
-    <div class="fg"><label>Sort by</label><select id="fSo" onchange="go()">
-      <option value="idx">Index</option>
-      <option value="name">Name A–Z</option>
-      <option value="co">Company A–Z</option>
-      <option value="country">Country A–Z</option>
-      <option value="date_asc">Date ↑ Oldest</option>
-      <option value="date_desc">Date ↓ Newest</option>
-    </select></div>
-    <button class="rbtn" onclick="resetAll()">✕ Reset</button>
-    <span class="rcnt" id="rCnt"></span>
-  </div>
-
-  <div class="charts">
-    <div class="cc"><div class="ct">Signups by Year</div><div style="position:relative;height:200px"><canvas id="cY"></canvas></div></div>
-    <div class="cc"><div class="ct">Top 8 Countries</div><div style="position:relative;height:200px"><canvas id="cCo"></canvas></div></div>
-  </div>
-
-  <div class="tcard">
-    <div class="thead2">
-      <span class="tt">Customer Records</span>
-      <span class="rowcount" id="rowCount"></span>
+    <!-- ===== LOADING SCREEN ===== -->
+    <div id="loader">
+        <svg class="loader-boat" width="80" height="60" viewBox="0 0 80 60" fill="none">
+            <path d="M10 45 Q20 35 40 38 Q60 35 70 45 L65 50 Q40 48 15 50 Z" fill="rgba(255,255,255,0.3)" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+            <path d="M40 38 L40 12 L58 30 Z" fill="rgba(255,255,255,0.6)"/>
+            <circle cx="40" cy="8" r="2" fill="#fbbf24"/>
+        </svg>
+        <div style="margin-top:24px; display:flex; gap:8px; align-items:flex-end;">
+            <div class="loader-wave" style="width:40px; height:6px; background:rgba(255,255,255,0.5); border-radius:3px;"></div>
+            <div class="loader-wave-2" style="width:50px; height:6px; background:rgba(255,255,255,0.6); border-radius:3px;"></div>
+            <div class="loader-wave-3" style="width:40px; height:6px; background:rgba(255,255,255,0.5); border-radius:3px;"></div>
+        </div>
+        <p style="color:rgba(255,255,255,0.7); margin-top:16px; font-size:14px; letter-spacing:2px; text-transform:uppercase;">Anbel Car Rental</p>
     </div>
-    <div class="tx">
-      <table>
-        <thead><tr>
-          <th onclick="srt('idx')" id="h-idx">#</th>
-          <th onclick="srt('name')" id="h-name">Name ↕</th>
-          <th onclick="srt('co')" id="h-co">Company ↕</th>
-          <th onclick="srt('country')" id="h-country">Country ↕</th>
-          <th>Email</th>
-          <th onclick="srt('date_desc')" id="h-date_desc">Subscription Date ↕</th>
-        </tr></thead>
-        <tbody id="tB"></tbody>
-      </table>
+
+    <!-- ===== NAVIGATION ===== -->
+    <nav id="mainNav" class="fixed top-0 left-0 right-0 z-50 transition-all">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16 md:h-20">
+                <a href="#home" class="flex items-center space-x-2">
+                    <i class="fas fa-car-side nav-logo-icon text-accent text-2xl transition-colors"></i>
+                    <span class="text-xl font-bold nav-logo-text transition-colors">Anbel Car Rental</span>
+                </a>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#home" class="nav-link font-medium text-sm">Home</a>
+                    <a href="#fleet" class="nav-link font-medium text-sm">Our Fleet</a>
+                    <a href="#about" class="nav-link font-medium text-sm">About</a>
+                    <a href="#contact" class="nav-link font-medium text-sm">Contact</a>
+                </div>
+                <button id="mobileMenuBtn" class="md:hidden text-white text-xl p-2"><i class="fas fa-bars"></i></button>
+            </div>
+        </div>
+        <div id="mobileMenu" class="md:hidden bg-white/95 backdrop-blur-xl border-t shadow-xl">
+            <div class="px-4 py-4 space-y-1">
+                <a href="#home" class="block py-3 px-4 text-gray-700 hover:text-primary hover:bg-primary/5 rounded-xl font-medium transition mobile-nav-link">Home</a>
+                <a href="#fleet" class="block py-3 px-4 text-gray-700 hover:text-primary hover:bg-primary/5 rounded-xl font-medium transition mobile-nav-link">Our Fleet</a>
+                <a href="#about" class="block py-3 px-4 text-gray-700 hover:text-primary hover:bg-primary/5 rounded-xl font-medium transition mobile-nav-link">About</a>
+                <a href="#contact" class="block py-3 px-4 text-gray-700 hover:text-primary hover:bg-primary/5 rounded-xl font-medium transition mobile-nav-link">Contact</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ===== HERO ===== -->
+    <section id="home" class="hero-section relative text-white min-h-screen flex items-center">
+        <div class="sun-glow"></div>
+        <svg class="cloud cloud-1" width="200" height="60" viewBox="0 0 200 60"><ellipse cx="70" cy="35" rx="60" ry="20" fill="white"/><ellipse cx="110" cy="30" rx="45" ry="18" fill="white"/><ellipse cx="50" cy="38" rx="35" ry="14" fill="white"/><ellipse cx="140" cy="36" rx="30" ry="12" fill="white"/></svg>
+        <svg class="cloud cloud-2" width="160" height="50" viewBox="0 0 160 50"><ellipse cx="50" cy="28" rx="40" ry="16" fill="white"/><ellipse cx="90" cy="25" rx="35" ry="14" fill="white"/><ellipse cx="30" cy="30" rx="25" ry="10" fill="white"/></svg>
+        <svg class="cloud cloud-3" width="180" height="55" viewBox="0 0 180 55"><ellipse cx="60" cy="32" rx="50" ry="18" fill="white"/><ellipse cx="100" cy="28" rx="40" ry="15" fill="white"/><ellipse cx="130" cy="33" rx="30" ry="12" fill="white"/></svg>
+        <div id="mistContainer" class="absolute inset-0 pointer-events-none"></div>
+        <svg class="palm-leaf absolute bottom-0 right-0 opacity-15 w-40 md:w-64" viewBox="0 0 200 300" style="animation-delay:0s;"><path d="M180 300 Q160 220 100 180 Q60 160 20 100 Q10 80 15 60 Q20 40 40 50 Q80 70 110 130 Q130 160 150 200 Q165 230 180 300Z" fill="#22c55e"/></svg>
+        <svg class="palm-leaf absolute bottom-0 left-0 opacity-10 w-32 md:w-48 -scale-x-100" viewBox="0 0 200 300" style="animation-delay:1.5s;"><path d="M180 300 Q160 220 100 180 Q60 160 20 100 Q10 80 15 60 Q20 40 40 50 Q80 70 110 130 Q130 160 150 200 Q165 230 180 300Z" fill="#22c55e"/></svg>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 md:py-40 z-10">
+            <div class="text-center max-w-4xl mx-auto">
+                <div class="hero-title">
+                    <span id="heroBadge" class="inline-block bg-white/10 backdrop-blur-sm text-sm font-semibold px-4 py-1.5 rounded-full mb-6 border border-white/20">
+                        <i class="fas fa-certificate mr-2 text-accent"></i>Malaysia's Trusted Car Rental
+                    </span>
+                    <h1 class="text-4xl sm:text-5xl md:text-7xl font-extrabold leading-tight tracking-tight">
+                        Premium Car Rental<br><span class="gradient-text">Made Simple</span>
+                    </h1>
+                </div>
+                <p class="hero-subtitle text-lg md:text-2xl text-blue-100/90 mt-6 max-w-2xl mx-auto leading-relaxed">
+                    Quality vehicles, unbeatable prices, and hassle-free rentals. Book your dream car today.
+                </p>
+                <div class="hero-buttons flex flex-col sm:flex-row gap-4 justify-center mt-10">
+                    <a href="#fleet" class="btn-ripple bg-accent hover:bg-yellow-400 text-white font-bold px-10 py-4 rounded-2xl text-lg shadow-xl shadow-accent/30 hover:shadow-accent/50">
+                        <i class="fas fa-car mr-2"></i> Browse Our Fleet
+                    </a>
+                    <a href="#contact" class="btn-ripple border-2 border-white/40 text-white hover:bg-white/10 font-bold px-10 py-4 rounded-2xl text-lg backdrop-blur-sm">
+                        <i class="fas fa-phone mr-2"></i> Contact Us
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="wave-container" style="height:120px;">
+            <svg class="wave-svg" viewBox="0 0 2880 120" preserveAspectRatio="none" style="height:120px;">
+                <path class="wave-path-2" d="M0,60 C240,20 480,100 720,60 C960,20 1200,100 1440,60 C1680,20 1920,100 2160,60 C2400,20 2640,100 2880,60 L2880,120 L0,120Z" fill="rgba(255,255,255,0.06)"/>
+                <path class="wave-path-1" d="M0,80 C320,40 640,110 960,70 C1280,30 1600,100 1920,70 C2240,40 2560,100 2880,70 L2880,120 L0,120Z" fill="rgba(255,255,255,0.08)"/>
+                <path class="wave-path-3" d="M0,90 C360,60 720,110 1080,80 C1440,50 1800,100 2160,80 C2520,60 2700,90 2880,80 L2880,120 L0,120Z" fill="rgba(255,255,255,0.95)"/>
+            </svg>
+        </div>
+    </section>
+
+    <!-- ===== STATS BAR ===== -->
+    <section class="bg-white py-10 relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                <div class="reveal stagger-1"><div class="text-3xl md:text-4xl font-extrabold text-primary stat-number" data-target="50">0</div><div class="text-gray-500 mt-2 font-medium">Vehicles Available</div></div>
+                <div class="reveal stagger-2"><div class="text-3xl md:text-4xl font-extrabold text-primary stat-number" data-target="1200">0</div><div class="text-gray-500 mt-2 font-medium">Happy Customers</div></div>
+                <div class="reveal stagger-3"><div class="text-3xl md:text-4xl font-extrabold text-primary stat-number" data-target="4.9" data-decimal="true">0</div><div class="text-gray-500 mt-2 font-medium">Customer Rating</div></div>
+                <div class="reveal stagger-4"><div class="text-3xl md:text-4xl font-extrabold text-primary">24/7</div><div class="text-gray-500 mt-2 font-medium">Support Available</div></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== FLEET SECTION ===== -->
+    <section id="fleet" class="py-16 md:py-24 relative bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-14 reveal">
+                <span class="inline-block text-primary text-sm font-bold uppercase tracking-widest mb-3">Our Fleet</span>
+                <h2 class="text-3xl md:text-5xl font-extrabold text-gray-800 mb-4">Choose Your Ride</h2>
+                <p class="text-gray-500 max-w-xl mx-auto text-lg">Choose from our wide selection of well-maintained vehicles for any occasion</p>
+            </div>
+            <div class="flex flex-wrap justify-center gap-3 mb-12 reveal">
+                <button onclick="filterCars('all')" class="filter-btn active bg-primary text-white px-6 py-2.5 rounded-full font-semibold text-sm transition-all duration-300 shadow-md shadow-primary/20">All Cars</button>
+                <button onclick="filterCars('sedan')" class="filter-btn bg-white text-gray-600 hover:bg-primary hover:text-white px-6 py-2.5 rounded-full font-semibold text-sm transition-all duration-300 shadow-sm border border-gray-100">Sedan</button>
+                <button onclick="filterCars('suv')" class="filter-btn bg-white text-gray-600 hover:bg-primary hover:text-white px-6 py-2.5 rounded-full font-semibold text-sm transition-all duration-300 shadow-sm border border-gray-100">SUV</button>
+                <button onclick="filterCars('sports')" class="filter-btn bg-white text-gray-600 hover:bg-primary hover:text-white px-6 py-2.5 rounded-full font-semibold text-sm transition-all duration-300 shadow-sm border border-gray-100">Sports</button>
+                <button onclick="filterCars('mpv')" class="filter-btn bg-white text-gray-600 hover:bg-primary hover:text-white px-6 py-2.5 rounded-full font-semibold text-sm transition-all duration-300 shadow-sm border border-gray-100">MPV</button>
+            </div>
+            <div id="carGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="car-card bg-white rounded-2xl shadow-lg overflow-hidden reveal stagger-1" data-category="sedan">
+                    <div class="card-image relative"><img src="https://images.unsplash.com/photo-1549317661-bd32c8ce0abb?w=600&h=400&fit=crop" alt="Toyota Camry" class="w-full h-56 object-cover" loading="lazy"><span class="absolute top-4 left-4 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">Available</span><span class="absolute top-4 right-4 bg-gray-900/70 backdrop-blur-sm text-white text-xs font-bold px-3 py-1 rounded-full">Sedan</span></div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-1">Toyota Camry 2024</h3>
+                        <p class="text-gray-500 text-sm mb-3">Automatic | 5 Seats | Sedan</p>
+                        <div class="flex items-center text-yellow-500 text-sm mb-3"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i><span class="text-gray-400 ml-1">(4.5)</span></div>
+                        <div class="flex items-center gap-4 text-sm text-gray-500 mb-4"><span><i class="fas fa-gas-pump mr-1 text-gray-400"></i>Petrol</span><span><i class="fas fa-cogs mr-1 text-gray-400"></i>Auto</span><span><i class="fas fa-users mr-1 text-gray-400"></i>5</span></div>
+                        <div class="flex items-center justify-between border-t pt-4">
+                            <div class="price-badge bg-primary/10 text-primary px-4 py-1.5 rounded-lg"><span class="text-2xl font-extrabold">RM 150</span><span class="text-sm opacity-60">/day</span></div>
+                            <button onclick="openCarModal(1)" class="card-btn bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-xl font-semibold text-sm">View Details</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="car-card bg-white rounded-2xl shadow-lg overflow-hidden reveal stagger-2" data-category="suv">
+                    <div class="card-image relative"><img src="https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=600&h=400&fit=crop" alt="Honda CR-V" class="w-full h-56 object-cover" loading="lazy"><span class="absolute top-4 left-4 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">Available</span><span class="absolute top-4 right-4 bg-gray-900/70 backdrop-blur-sm text-white text-xs font-bold px-3 py-1 rounded-full">SUV</span></div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-1">Honda CR-V 2024</h3>
+                        <p class="text-gray-500 text-sm mb-3">Automatic | 7 Seats | SUV</p>
+                        <div class="flex items-center text-yellow-500 text-sm mb-3"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><span class="text-gray-400 ml-1">(5.0)</span></div>
+                        <div class="flex items-center gap-4 text-sm text-gray-500 mb-4"><span><i class="fas fa-gas-pump mr-1 text-gray-400"></i>Petrol</span><span><i class="fas fa-cogs mr-1 text-gray-400"></i>Auto</span><span><i class="fas fa-users mr-1 text-gray-400"></i>7</span></div>
+                        <div class="flex items-center justify-between border-t pt-4">
+                            <div class="price-badge bg-primary/10 text-primary px-4 py-1.5 rounded-lg"><span class="text-2xl font-extrabold">RM 220</span><span class="text-sm opacity-60">/day</span></div>
+                            <button onclick="openCarModal(2)" class="card-btn bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-xl font-semibold text-sm">View Details</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="car-card bg-white rounded-2xl shadow-lg overflow-hidden reveal stagger-3" data-category="sports">
+                    <div class="card-image relative"><img src="https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=600&h=400&fit=crop" alt="BMW M4" class="w-full h-56 object-cover" loading="lazy"><span class="absolute top-4 left-4 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">Booked</span><span class="absolute top-4 right-4 bg-gray-900/70 backdrop-blur-sm text-white text-xs font-bold px-3 py-1 rounded-full">Sports</span></div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-1">BMW M4 Competition</h3>
+                        <p class="text-gray-500 text-sm mb-3">Automatic | 4 Seats | Sports</p>
+                        <div class="flex items-center text-yellow-500 text-sm mb-3"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><span class="text-gray-400 ml-1">(4.9)</span></div>
+                        <div class="flex items-center gap-4 text-sm text-gray-500 mb-4"><span><i class="fas fa-gas-pump mr-1 text-gray-400"></i>Petrol</span><span><i class="fas fa-cogs mr-1 text-gray-400"></i>Auto</span><span><i class="fas fa-users mr-1 text-gray-400"></i>4</span></div>
+                        <div class="flex items-center justify-between border-t pt-4">
+                            <div class="price-badge bg-primary/10 text-primary px-4 py-1.5 rounded-lg"><span class="text-2xl font-extrabold">RM 450</span><span class="text-sm opacity-60">/day</span></div>
+                            <button onclick="openCarModal(3)" class="card-btn bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-xl font-semibold text-sm">View Details</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="car-card bg-white rounded-2xl shadow-lg overflow-hidden reveal stagger-4" data-category="mpv">
+                    <div class="card-image relative"><img src="https://images.unsplash.com/photo-1549317661-bd32c8ce0abb?w=600&h=400&fit=crop" alt="Toyota Alphard" class="w-full h-56 object-cover" loading="lazy"><span class="absolute top-4 left-4 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">Available</span><span class="absolute top-4 right-4 bg-gray-900/70 backdrop-blur-sm text-white text-xs font-bold px-3 py-1 rounded-full">MPV</span></div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-1">Toyota Alphard 2023</h3>
+                        <p class="text-gray-500 text-sm mb-3">Automatic | 7 Seats | MPV</p>
+                        <div class="flex items-center text-yellow-500 text-sm mb-3"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star"></i><span class="text-gray-400 ml-1">(4.0)</span></div>
+                        <div class="flex items-center gap-4 text-sm text-gray-500 mb-4"><span><i class="fas fa-gas-pump mr-1 text-gray-400"></i>Petrol</span><span><i class="fas fa-cogs mr-1 text-gray-400"></i>Auto</span><span><i class="fas fa-users mr-1 text-gray-400"></i>7</span></div>
+                        <div class="flex items-center justify-between border-t pt-4">
+                            <div class="price-badge bg-primary/10 text-primary px-4 py-1.5 rounded-lg"><span class="text-2xl font-extrabold">RM 350</span><span class="text-sm opacity-60">/day</span></div>
+                            <button onclick="openCarModal(4)" class="card-btn bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-xl font-semibold text-sm">View Details</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="car-card bg-white rounded-2xl shadow-lg overflow-hidden reveal stagger-5" data-category="sedan">
+                    <div class="card-image relative"><img src="https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&h=400&fit=crop" alt="Mercedes C-Class" class="w-full h-56 object-cover" loading="lazy"><span class="absolute top-4 left-4 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">Available</span><span class="absolute top-4 right-4 bg-gray-900/70 backdrop-blur-sm text-white text-xs font-bold px-3 py-1 rounded-full">Sedan</span></div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-1">Mercedes C300 2024</h3>
+                        <p class="text-gray-500 text-sm mb-3">Automatic | 5 Seats | Sedan</p>
+                        <div class="flex items-center text-yellow-500 text-sm mb-3"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i><span class="text-gray-400 ml-1">(4.7)</span></div>
+                        <div class="flex items-center gap-4 text-sm text-gray-500 mb-4"><span><i class="fas fa-gas-pump mr-1 text-gray-400"></i>Petrol</span><span><i class="fas fa-cogs mr-1 text-gray-400"></i>Auto</span><span><i class="fas fa-users mr-1 text-gray-400"></i>5</span></div>
+                        <div class="flex items-center justify-between border-t pt-4">
+                            <div class="price-badge bg-primary/10 text-primary px-4 py-1.5 rounded-lg"><span class="text-2xl font-extrabold">RM 280</span><span class="text-sm opacity-60">/day</span></div>
+                            <button onclick="openCarModal(5)" class="card-btn bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-xl font-semibold text-sm">View Details</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="car-card bg-white rounded-2xl shadow-lg overflow-hidden reveal stagger-6" data-category="suv">
+                    <div class="card-image relative"><img src="https://images.unsplash.com/photo-1606611013016-969c19ba27c9?w=600&h=400&fit=crop" alt="Mazda CX-5" class="w-full h-56 object-cover" loading="lazy"><span class="absolute top-4 left-4 bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">Maintenance</span><span class="absolute top-4 right-4 bg-gray-900/70 backdrop-blur-sm text-white text-xs font-bold px-3 py-1 rounded-full">SUV</span></div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-1">Mazda CX-5 2023</h3>
+                        <p class="text-gray-500 text-sm mb-3">Automatic | 5 Seats | SUV</p>
+                        <div class="flex items-center text-yellow-500 text-sm mb-3"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star"></i><span class="text-gray-400 ml-1">(4.2)</span></div>
+                        <div class="flex items-center gap-4 text-sm text-gray-500 mb-4"><span><i class="fas fa-gas-pump mr-1 text-gray-400"></i>Petrol</span><span><i class="fas fa-cogs mr-1 text-gray-400"></i>Auto</span><span><i class="fas fa-users mr-1 text-gray-400"></i>5</span></div>
+                        <div class="flex items-center justify-between border-t pt-4">
+                            <div class="price-badge bg-primary/10 text-primary px-4 py-1.5 rounded-lg"><span class="text-2xl font-extrabold">RM 180</span><span class="text-sm opacity-60">/day</span></div>
+                            <button disabled class="bg-gray-300 text-white px-5 py-2.5 rounded-xl font-semibold text-sm cursor-not-allowed">Unavailable</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== WAVE (Fleet → About) ===== -->
+    <div class="section-wave bg-gray-50">
+        <svg viewBox="0 0 2880 80" preserveAspectRatio="none" style="height:80px;">
+            <path class="wave-anim-1" d="M0,40 C480,80 960,0 1440,40 C1920,80 2400,0 2880,40 L2880,80 L0,80Z" fill="#0f172a" opacity="0.15"/>
+            <path class="wave-anim-2" d="M0,50 C360,20 720,70 1080,40 C1440,10 1800,60 2160,40 C2520,20 2700,50 2880,40 L2880,80 L0,80Z" fill="#0ea5e9" opacity="0.08"/>
+            <path d="M0,65 C480,45 960,75 1440,55 C1920,35 2400,65 2880,55 L2880,80 L0,80Z" fill="white"/>
+        </svg>
     </div>
-    <div class="pgr">
-      <span class="pi" id="pI">—</span>
-      <div class="pc" id="pC"></div>
+
+    <!-- ===== ABOUT SECTION ===== -->
+    <section id="about" class="py-16 md:py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-2 gap-14 items-center">
+                <div class="reveal-left">
+                    <span class="inline-block text-primary text-sm font-bold uppercase tracking-widest mb-3">About Us</span>
+                    <h2 class="text-3xl md:text-4xl font-extrabold text-gray-800 mb-6" id="aboutHeading">Why Choose Anbel Car Rental?</h2>
+                    <p class="text-gray-600 mb-8 leading-relaxed text-lg" id="aboutDesc">Anbel Car Rental...</p>
+                    <div class="space-y-5" id="aboutFeatures"></div>
+                </div>
+                <div class="reveal-right relative">
+                    <img id="aboutImage" src="https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=700&h=500&fit=crop" alt="Car Rental" class="rounded-3xl shadow-2xl" loading="lazy">
+                    <div class="absolute -top-4 -right-4 w-24 h-24 bg-primary/10 rounded-full blur-xl"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== WAVE (About → Contact) ===== -->
+    <div class="section-wave bg-white">
+        <svg viewBox="0 0 2880 80" preserveAspectRatio="none" style="height:80px;">
+            <path class="wave-anim-1" d="M0,40 C480,80 960,0 1440,40 C1920,80 2400,0 2880,40 L2880,80 L0,80Z" fill="#f9fafb" opacity="0.5"/>
+            <path class="wave-anim-2" d="M0,55 C360,25 720,65 1080,45 C1440,25 1800,65 2160,45 C2520,25 2700,55 2880,45 L2880,80 L0,80Z" fill="#f9fafb"/>
+        </svg>
     </div>
-  </div>
-</div>
 
-<script>
-const SHEET_ID = '1utzDyYdysxCkchoaE5YoSOxtqz9joEWIWy7KPBWm8CI';
-const CSV_URL  = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/export?format=csv';
+    <!-- ===== CONTACT SECTION ===== -->
+    <section id="contact" class="py-16 md:py-24 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-14 reveal">
+                <span class="inline-block text-primary text-sm font-bold uppercase tracking-widest mb-3">Contact</span>
+                <h2 class="text-3xl md:text-5xl font-extrabold text-gray-800 mb-4">Get In Touch</h2>
+                <p class="text-gray-500 max-w-xl mx-auto text-lg">Have questions? Reach out to us via WhatsApp or visit our office</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-white p-8 rounded-2xl shadow-lg text-center reveal stagger-1 hover:shadow-xl transition-shadow duration-300 group">
+                    <div class="bg-green-100 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5 group-hover:scale-110 transition-transform duration-300"><i class="fab fa-whatsapp text-green-500 text-3xl"></i></div>
+                    <h3 class="font-bold text-gray-800 mb-2">WhatsApp</h3>
+                    <p class="text-gray-500 text-sm mb-5">Quick response via WhatsApp</p>
+                    <a href="https://wa.me/60123456789" target="_blank" class="btn-ripple inline-block bg-green-500 text-white px-6 py-2.5 rounded-xl hover:bg-green-600 transition font-semibold text-sm shadow-lg shadow-green-500/25">Chat Now</a>
+                </div>
+                <div class="bg-white p-8 rounded-2xl shadow-lg text-center reveal stagger-2 hover:shadow-xl transition-shadow duration-300 group">
+                    <div class="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5 group-hover:scale-110 transition-transform duration-300"><i class="fas fa-phone text-primary text-3xl"></i></div>
+                    <h3 class="font-bold text-gray-800 mb-2">Phone</h3>
+                    <p class="text-gray-500 text-sm mb-5">Call us during business hours</p>
+                    <a href="tel:+60123456789" class="btn-ripple inline-block bg-primary text-white px-6 py-2.5 rounded-xl hover:bg-primary-dark transition font-semibold text-sm shadow-lg shadow-primary/25">+601-2345-6789</a>
+                </div>
+                <div class="bg-white p-8 rounded-2xl shadow-lg text-center reveal stagger-3 hover:shadow-xl transition-shadow duration-300 group">
+                    <div class="bg-accent/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5 group-hover:scale-110 transition-transform duration-300"><i class="fas fa-map-marker-alt text-accent text-3xl"></i></div>
+                    <h3 class="font-bold text-gray-800 mb-2">Office</h3>
+                    <p class="text-gray-500 text-sm mb-5">Visit our rental office</p>
+                    <span class="text-gray-600 text-sm">123 Rental Street, Kuala Lumpur, Malaysia</span>
+                </div>
+            </div>
+        </div>
+    </section>
 
-// Fallback baked data
-const BAKED=[["1","Sheryl","Baxter","Rasmussen Group","Chile","zunigavanessa@smith.info","8/24/2020"],["2","Preston","Lozano","Vega-Gentry","Djibouti","vmata@colon.com","4/23/2021"],["3","Roy","Berry","Murillo-Perry","Antigua and Barbuda","beckycarr@hogan.com","3/25/2020"],["4","Linda","Olsen","Dominguez Mcmillan and Donovan","Dominican Republic","stanleyblackwell@benson.org","6/2/2020"],["5","Joanna","Bender","Martin Lang and Andrade","Slovakia (Slovak Republic)","colinalvarado@miles.net","4/17/2021"],["6","Aimee","Downs","Steele Group","Papua New Guinea","kristinaleon@warner.com","3/26/2020"],["7","Darren","Tillman","Heating Group","Cabo Verde","rcross@jenkins.com","5/18/2020"],["8","Jamie","White","Avalon Couriers","Bulgaria","thomaspadilla@mcdaniel.net","6/26/2020"],["9","Mark","James","Ramos Group","Lithuania","hgonzalez@williamson.biz","5/9/2020"],["10","Cynthia","Newman","Parker LLC","Gabon","qross@bray.com","9/22/2021"],["11","Elaine","Robertson","Steele-Jackson","South Georgia and the South Sandwich Islands","mcintyredaniel@barnett.com","7/25/2021"],["12","Melanie","Hernandez","Newton Group","Comoros","dianecampbell@jenkins.net","8/3/2021"],["13","Patrick","Walton","Hunt-Macdonald","Bhutan","rachel01@yahoo.com","6/28/2021"],["14","Daniel","Freeman","Harrington-Martinez","Denmark","smithtonya@mckee-jenkins.net","4/26/2022"],["15","Lori","Patton","Velasquez-Harrington","Maldives","maryrogers@gmail.com","6/30/2022"],["16","Crystal","Morrow","Peters-Hernandez","Cameroon","tammynguyen@hall.com","9/14/2021"],["17","Matthew","Pierce","Larson LLC","Guinea","andersonkaren@henderson.com","11/14/2022"],["18","Angela","Watson","Rogers and Sons","Cameroon","jenniferfuller@gill.org","7/17/2022"],["19","Thomas","Andrews","Evans Ltd","Malawi","christopherwilson@yahoo.com","5/29/2021"],["20","Aaron","Sullivan","Cook Ltd","Cook Islands","james85@yahoo.com","2/15/2022"],["21","Lisa","Grant","Bradley and Sons","Panama","zachary09@gmail.com","12/12/2020"],["22","Dennis","Turner","Cooper-Montgomery","Papua New Guinea","stewarthannah@howe-gould.org","8/10/2021"],["23","Beverly","Cruz","Peck-Parks","Vanuatu","jessica55@yahoo.com","9/12/2022"],["24","Scott","Wood","Espinoza-Ellis","Maldives","phancock@hotmail.com","3/28/2020"],["25","Patricia","Lane","Smith-Brown","Seychelles","laurabrown@yahoo.com","7/29/2021"],["26","Ryan","Lee","Rogers-Mitchell","Guadeloupe","garcianicholas@odom.com","3/20/2021"],["27","Sandra","Baker","Williams-Wilson","Ethiopia","gregorypotts@gmail.com","12/31/2021"],["28","Thomas","Collins","Johnson Inc","Maldives","reneediaz@gmail.com","5/3/2022"],["29","Virginia","Anderson","Williams LLC","Bhutan","nicholas89@yahoo.com","8/24/2020"],["30","Joan","Jenkins","Stewart Group","Heard Island and McDonald Islands","sarahbrown@hill.com","3/15/2022"],["31","Marie","Morgan","Stewart-Brown","Anguilla","thomasconner@ramirez-thomas.com","10/21/2022"],["32","Dennis","Coleman","Brown Group","Uganda","christinesmith@brown.com","8/31/2020"],["33","Gloria","Morris","Williams-Brown","Eritrea","christophermay@hotmail.com","12/6/2021"],["34","Harold","Richardson","Smith Inc","Solomon Islands","williamjohnson@yahoo.com","11/12/2022"],["35","Stacy","Harris","Brown-Williams","Kyrgyzstan","davidwilson@williams.com","7/8/2020"],["36","Ryan","Brown","Johnson LLC","Micronesia","davidbrown@yahoo.com","10/10/2021"],["37","Melissa","Moore","Williams Inc","South Georgia and the South Sandwich Islands","johnsonwilliams@yahoo.com","3/12/2020"],["38","Donald","Martinez","Brown-Johnson","Liberia","brownmartinez@gmail.com","10/28/2021"],["39","Helen","Thompson","Davis Group","Tuvalu","thompsondavis@yahoo.com","1/19/2022"],["40","Kevin","White","Moore LLC","Eritrea","whitemoore@gmail.com","7/22/2020"],["41","Rachel","Jackson","Taylor Inc","Benin","jacksontaylor@yahoo.com","11/2/2021"],["42","Steven","Lee","Anderson Group","Anguilla","leeanderson@gmail.com","4/15/2020"],["43","Nicole","Harris","Thomas LLC","Bhutan","harristhomas@yahoo.com","8/27/2022"],["44","Eric","Clark","Jackson Inc","Malawi","clarkjackson@gmail.com","2/8/2020"],["45","Amy","Lewis","White Group","Belize","lewiswhite@yahoo.com","6/21/2021"],["46","Brian","Robinson","Harris Group","Cabo Verde","robinsonharris@gmail.com","10/4/2022"],["47","Catherine","Walker","Clark LLC","Bhutan","walkerclark@yahoo.com","1/16/2020"],["48","David","Hall","Lewis Inc","Gabon","halllew@gmail.com","5/30/2021"],["49","Elizabeth","Young","Robinson Group","Cook Islands","youngrobinson@yahoo.com","9/12/2022"],["50","Frank","Allen","Walker Group","Eritrea","allenwalker@gmail.com","12/25/2020"],["51","Grace","King","Hall LLC","Maldives","kinghall@yahoo.com","4/8/2021"],["52","Henry","Wright","Young Inc","Uganda","youngwright@gmail.com","8/21/2022"],["53","Irene","Scott","Allen Group","Vanuatu","scottallen@yahoo.com","1/3/2020"],["54","Jack","Green","King LLC","Tuvalu","greenking@gmail.com","5/16/2021"],["55","Karen","Adams","Wright Inc","Solomon Islands","adamswright@yahoo.com","9/29/2022"],["56","Larry","Baker","Scott Group","Liberia","bakerscott@gmail.com","2/11/2020"],["57","Mary","Carter","Green LLC","Tuvalu","cartergreen@yahoo.com","6/24/2021"],["58","Nathan","Mitchell","Adams Inc","Solomon Islands","mitchelladams@gmail.com","10/7/2022"],["59","Olivia","Perez","Carter Group","Kyrgyzstan","perezscott@yahoo.com","1/20/2020"],["60","Peter","Roberts","Mitchell LLC","Uganda","robertsmitchell@gmail.com","5/3/2021"],["61","Quinn","Turner","Perez Inc","Eritrea","turnerperez@yahoo.com","8/16/2022"],["62","Rebecca","Phillips","Roberts Group","Maldives","phillipsroberts@gmail.com","12/29/2020"],["63","Samuel","Campbell","Turner LLC","Bhutan","campbellturner@yahoo.com","4/12/2021"],["64","Tina","Parker","Phillips Inc","Anguilla","parkerphillips@gmail.com","8/25/2022"],["65","Uma","Evans","Campbell Group","Gabon","evanscampbell@yahoo.com","2/7/2020"],["66","Victor","Edwards","Parker LLC","Benin","edwardsparker@gmail.com","6/20/2021"],["67","Wendy","Collins","Evans Inc","Kyrgyzstan","collinsevans@yahoo.com","10/3/2022"],["68","Xander","Stewart","Edwards Group","Liberia","stewartedwards@gmail.com","1/16/2020"],["69","Yvonne","Morris","Collins LLC","Vanuatu","morriscollins@yahoo.com","5/29/2021"],["70","Zachary","Rogers","Stewart Inc","Cook Islands","rogersstewart@gmail.com","9/11/2022"],["71","Alice","Reed","Morris Group","Albania","reedmorris@yahoo.com","12/24/2020"],["72","Bobby","Cook","Rogers LLC","Algeria","cookrogers@gmail.com","4/7/2021"],["73","Clara","Bell","Reed Inc","Belarus","bellreed@yahoo.com","8/20/2022"],["74","Derek","Murphy","Cook Group","Belize","murphycook@gmail.com","2/2/2020"],["75","Ella","Bailey","Bell LLC","Bolivia","baileybell@yahoo.com","6/15/2021"],["76","Floyd","Rivera","Murphy Inc","Bosnia and Herzegovina","rivermurphy@gmail.com","10/28/2022"],["77","Gina","Cooper","Bailey Group","Bulgaria","cooperbailey@yahoo.com","1/10/2020"],["78","Hugo","Richardson","Rivera LLC","Burkina Faso","richarivera@gmail.com","5/23/2021"],["79","Iris","Cox","Cooper Inc","Canada","coxcooper@yahoo.com","9/5/2022"],["80","James","Howard","Richardson Group","Chile","howardrichardson@gmail.com","12/18/2020"],["81","Kate","Ward","Cox LLC","Comoros","wardcox@yahoo.com","4/1/2021"],["82","Liam","Torres","Howard Inc","Cook Islands","torreshoward@gmail.com","8/14/2022"],["83","Mia","Peterson","Ward Group","Denmark","petersonward@yahoo.com","1/27/2020"],["84","Noah","Gray","Torres LLC","Dominican Republic","graytorres@gmail.com","6/9/2021"],["85","Olivia","Ramirez","Peterson Inc","Ethiopia","ramirezpeterson@yahoo.com","10/22/2022"],["86","Paul","James","Gray Group","Gabon","jamesgray@gmail.com","2/4/2020"],["87","Quincy","Watson","Ramirez LLC","Guadeloupe","watsonramirez@yahoo.com","6/17/2021"],["88","Rose","Brooks","James Inc","Guinea","brooksjames@gmail.com","10/30/2022"],["89","Steve","Kelly","Watson Group","Heard Island and McDonald Islands","kellywatson@yahoo.com","1/12/2020"],["90","Tara","Sanders","Brooks LLC","Kyrgyzstan","sanderbrooks@gmail.com","5/25/2021"],["91","Ursula","Price","Kelly Inc","Liberia","pricekelley@yahoo.com","9/7/2022"],["92","Vernon","Bennett","Sanders Group","Lithuania","bennettsanders@gmail.com","12/20/2020"],["93","Wanda","Wood","Price LLC","Malawi","woodprice@yahoo.com","4/3/2021"],["94","Xavier","Barnes","Bennett Inc","Maldives","barnesbennett@gmail.com","8/16/2022"],["95","Yara","Ross","Wood Group","Micronesia","rosswood@yahoo.com","1/29/2020"],["96","Zane","Henderson","Barnes LLC","Panama","hendersonbarnes@gmail.com","6/11/2021"],["97","Abby","Coleman","Ross Inc","Papua New Guinea","colemanross@yahoo.com","10/24/2022"],["98","Brad","Jenkins","Henderson Group","Seychelles","jenkinshenderson@yahoo.com","2/6/2020"],["99","Cara","Perry","Coleman LLC","Slovakia (Slovak Republic)","perrycoleman@gmail.com","6/19/2021"],["100","Dale","Powell","Jenkins Inc","Uganda","powelljenkins@yahoo.com","10/2/2022"]];
+    <!-- ===== TERMS ===== -->
+    <section class="py-16 bg-white">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-extrabold text-gray-800 mb-8 text-center reveal">Terms & Conditions</h2>
+            <div class="bg-gray-50 rounded-2xl p-8 space-y-4 text-gray-600 text-sm leading-relaxed reveal">
+                <p><strong>1. Eligibility:</strong> Renters must be at least 21 years old and hold a valid driving license.</p>
+                <p><strong>2. Booking:</strong> All bookings are confirmed via WhatsApp after staff verification. A deposit may be required.</p>
+                <p><strong>3. Payment:</strong> Full payment is due before vehicle handover. Cash or bank transfer accepted.</p>
+                <p><strong>4. Fuel Policy:</strong> Vehicles must be returned with the same fuel level as at pickup.</p>
+                <p><strong>5. Damage:</strong> Renters are responsible for any damage not covered by insurance.</p>
+                <p><strong>6. Late Returns:</strong> A penalty fee of RM50/hour applies for late returns beyond the agreed time.</p>
+                <p><strong>7. Cancellation:</strong> Free cancellation up to 24 hours before the rental start time.</p>
+                <p><strong>8. Usage:</strong> Vehicles may not be used for illegal activities, racing, or off-road driving.</p>
+            </div>
+        </div>
+    </section>
 
-let ALL=[], filt=[], pg=1;
-const PG=15;
-let cY=null,cCo=null;
+    <!-- ===== FOOTER ===== -->
+    <footer class="bg-gray-900 text-white relative overflow-hidden">
+        <svg class="absolute top-0 left-0 w-full" viewBox="0 0 1440 60" preserveAspectRatio="none" height="30" style="margin-top:-1px;"><path d="M0,0 L1440,0 L1440,20 Q1200,50 960,30 Q720,10 480,30 Q240,50 0,20Z" fill="#f9fafb"/></svg>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8">
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
+                <div class="reveal stagger-1">
+                    <div class="flex items-center space-x-2 mb-4"><i class="fas fa-car-side text-accent text-2xl"></i><span class="text-xl font-bold" id="footerBizName">Anbel Car Rental</span></div>
+                    <p class="text-gray-400 text-sm leading-relaxed" id="footerTag">Premium car rental service with the best prices and well-maintained vehicles.</p>
+                    <div class="flex items-center gap-3 mt-4">
+                        <a href="#" class="w-9 h-9 bg-gray-800 hover:bg-primary rounded-xl flex items-center justify-center text-gray-400 hover:text-white transition" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="w-9 h-9 bg-gray-800 hover:bg-primary rounded-xl flex items-center justify-center text-gray-400 hover:text-white transition" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="w-9 h-9 bg-gray-800 hover:bg-primary rounded-xl flex items-center justify-center text-gray-400 hover:text-white transition" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+                    </div>
+                </div>
+                <div class="reveal stagger-2">
+                    <h4 class="font-bold mb-4 text-sm uppercase tracking-wider text-gray-300">Quick Links</h4>
+                    <div class="space-y-2.5">
+                        <a href="#home" class="block text-gray-400 hover:text-white transition text-sm">Home</a>
+                        <a href="#fleet" class="block text-gray-400 hover:text-white transition text-sm">Our Fleet</a>
+                        <a href="#about" class="block text-gray-400 hover:text-white transition text-sm">About Us</a>
+                        <a href="#contact" class="block text-gray-400 hover:text-white transition text-sm">Contact</a>
+                    </div>
+                </div>
+                <div class="reveal stagger-3">
+                    <h4 class="font-bold mb-4 text-sm uppercase tracking-wider text-gray-300">Contact Info</h4>
+                    <div class="space-y-3 text-gray-400 text-sm">
+                        <p class="flex items-start gap-2"><i class="fas fa-phone text-accent mt-0.5"></i><span id="footerPhone">+601-2345-6789</span></p>
+                        <p class="flex items-start gap-2"><i class="fab fa-whatsapp text-green-400 mt-0.5"></i><a href="https://wa.me/60123456789" target="_blank" class="hover:text-white transition">WhatsApp 24/7</a></p>
+                        <p class="flex items-start gap-2"><i class="fas fa-map-marker-alt text-accent mt-0.5"></i><span id="footerAddress">123 Rental Street, Kuala Lumpur</span></p>
+                    </div>
+                </div>
+                <div class="reveal stagger-4">
+                    <h4 class="font-bold mb-4 text-sm uppercase tracking-wider text-gray-300">Business Hours</h4>
+                    <div class="space-y-2.5 text-gray-400 text-sm">
+                        <p>Mon - Fri: <span class="text-white">8:00 AM - 8:00 PM</span></p>
+                        <p>Saturday: <span class="text-white">9:00 AM - 6:00 PM</span></p>
+                        <p>Sunday: <span class="text-white">10:00 AM - 4:00 PM</span></p>
+                        <p class="text-accent font-medium mt-3"><i class="fab fa-whatsapp mr-1"></i>WhatsApp: Available 24/7</p>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-10 pt-6 text-center text-gray-500 text-xs">
+                <p id="footerCopyright">&copy; 2026 Anbel Car Rental Enterprise. All rights reserved.</p>
+                <p class="mt-1 text-gray-600" id="footerSSMBar">SSM: 202603164986 (LA0090677-P)</p>
+            </div>
+        </div>
+    </footer>
 
-function parseCSV(txt){
-  const lines=txt.split('\n').filter(l=>l.trim());
-  const hdrs=lines[0].split(',').map(h=>h.replace(/"/g,'').trim());
-  return lines.slice(1).map(line=>{
-    const cols=[];let cur='',inQ=false;
-    for(let c of line){if(c==='"')inQ=!inQ;else if(c===','&&!inQ){cols.push(cur.trim());cur='';}else cur+=c;}
-    cols.push(cur.trim());
-    const o={};hdrs.forEach((h,i)=>o[h]=(cols[i]||'').replace(/"/g,''));return o;
-  });
-}
-function fromCSV(p){return p.map(r=>({idx:r['Index']||'',first:r['First Name']||'',last:r['Last Name']||'',company:r['Company']||'',country:r['Country']||'',email:r['Email']||'',date:r['Subscription Date']||''}));}
-function fromBaked(b){return b.map(r=>({idx:r[0],first:r[1],last:r[2],company:r[3],country:r[4],email:r[5],date:r[6]}));}
+    <!-- ===== CAR DETAIL MODAL ===== -->
+    <div id="carModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="modal-content bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center z-10">
+                <h3 class="text-xl font-bold text-gray-800" id="modalCarName">Car Details</h3>
+                <button onclick="closeCarModal()" class="text-gray-400 hover:text-red-500 text-xl transition p-2 hover:bg-red-50 rounded-xl"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6">
+                <img id="modalCarImage" src="" alt="" class="w-full h-64 object-cover rounded-xl mb-6">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-gray-50 rounded-xl p-4 text-center"><i class="fas fa-cogs text-primary text-xl mb-2"></i><div class="text-xs text-gray-500">Transmission</div><div class="font-bold text-gray-800 text-sm" id="modalTransmission">Automatic</div></div>
+                    <div class="bg-gray-50 rounded-xl p-4 text-center"><i class="fas fa-users text-primary text-xl mb-2"></i><div class="text-xs text-gray-500">Seats</div><div class="font-bold text-gray-800 text-sm" id="modalSeats">5 Seats</div></div>
+                    <div class="bg-gray-50 rounded-xl p-4 text-center"><i class="fas fa-gas-pump text-primary text-xl mb-2"></i><div class="text-xs text-gray-500">Fuel</div><div class="font-bold text-gray-800 text-sm" id="modalFuel">Petrol</div></div>
+                    <div class="bg-gray-50 rounded-xl p-4 text-center"><i class="fas fa-tag text-primary text-xl mb-2"></i><div class="text-xs text-gray-500">Price/Day</div><div class="font-bold text-primary text-sm" id="modalPrice">RM 150</div></div>
+                </div>
+                <div class="mb-6"><h4 class="font-bold text-gray-800 mb-2">Description</h4><p class="text-gray-600 text-sm leading-relaxed" id="modalDescription"></p></div>
 
-function showToast(msg,type='info',ms=3500){
-  const t=document.getElementById('toast');
-  t.innerHTML=(type==='success'?'✓ ':type==='error'?'✕ ':'↻ ')+msg;
-  t.className='toast '+type+' show';
-  setTimeout(()=>t.classList.remove('show'),ms);
-}
+                <!-- Date & Time Selection -->
+                <div class="bg-gray-50 rounded-xl p-5 mb-6">
+                    <h4 class="font-bold text-gray-800 mb-4"><i class="fas fa-calendar-alt mr-2 text-primary"></i>Select Your Rental Period</h4>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2"><i class="fas fa-calendar-check mr-1 text-primary"></i>Pickup & Return Dates</label>
+                        <input type="text" id="pickupDatesDisplay" readonly placeholder="Click to select pickup & return dates" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary bg-white cursor-pointer" data-cal-open="customer">
+                    </div>
+                    <input type="hidden" id="pickupDate" value="">
+                    <input type="hidden" id="pickupTime" value="">
+                    <input type="hidden" id="returnDate" value="">
+                    <input type="hidden" id="returnTime" value="">
+                    <p id="dateError" class="text-red-500 text-sm mt-3 hidden"><i class="fas fa-exclamation-circle mr-1"></i><span id="dateErrorText"></span></p>
+                </div>
 
-function setSyncBtn(state){
-  const btn=document.getElementById('syncBtn');
-  btn.className='sync-btn '+state;
-  if(state==='loading') btn.innerHTML='<span class="spin"></span><span>Syncing…</span>';
-  else if(state==='success'){btn.innerHTML='<span>✓</span><span>Synced!</span>';setTimeout(()=>setSyncBtn('idle'),2500);}
-  else if(state==='error') btn.innerHTML='<span>⚠</span><span>Retry Sync</span>';
-  else btn.innerHTML='<span class="live-dot"></span><span>Sync from Sheet</span>';
-}
+                <!-- Availability Indicator -->
+                <div id="availIndicator" class="hidden mb-6"></div>
 
-async function syncFromSheet(){
-  setSyncBtn('loading');
-  document.getElementById('syncStatus').textContent='Fetching from Google Sheets…';
-  try{
-    const res=await fetch(CSV_URL+'&t='+Date.now());
-    if(!res.ok)throw new Error('HTTP '+res.status);
-    const txt=await res.text();
-    if(!txt.includes(','))throw new Error('Bad data');
-    ALL=fromCSV(parseCSV(txt));
-    populateCountries();go();
-    setSyncBtn('success');
-    document.getElementById('syncStatus').textContent=ALL.length+' records · synced at '+new Date().toLocaleTimeString();
-    showToast('✓ Synced '+ALL.length+' rows from Google Sheets','success');
-  }catch(e){
-    setSyncBtn('error');
-    document.getElementById('syncStatus').textContent='Sync failed · showing cached data · ensure sheet is public';
-    showToast('Could not reach Google Sheets. Cached data shown.','error',5000);
-  }
-}
+                <!-- Booking Summary -->
+                <div id="bookingSummary" class="hidden bg-blue-50 border border-blue-100 rounded-xl p-5 mb-6">
+                    <h4 class="font-bold text-gray-800 mb-3"><i class="fas fa-receipt mr-2 text-primary"></i>Booking Summary</h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between"><span class="text-gray-500">Car:</span><span class="font-semibold text-gray-800" id="summaryCar">-</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Pickup:</span><span class="font-semibold text-gray-800" id="summaryPickup">-</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Return:</span><span class="font-semibold text-gray-800" id="summaryReturn">-</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Duration:</span><span class="font-semibold text-gray-800" id="summaryDuration">-</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Rate:</span><span class="font-semibold text-gray-800" id="summaryRate">-</span></div>
+                        <div class="border-t border-blue-200 pt-2 flex justify-between"><span class="font-bold text-gray-800">Total:</span><span class="font-extrabold text-primary text-lg" id="summaryTotal">-</span></div>
+                    </div>
+                </div>
 
-function populateCountries(){
-  const sel=document.getElementById('fC'),cur=sel.value;
-  const cs=[...new Set(ALL.map(r=>r.country).filter(Boolean))].sort();
-  sel.innerHTML='<option value="">All countries</option>'+cs.map(c=>`<option${c===cur?' selected':''}>${c}</option>`).join('');
-}
+                <!-- WhatsApp Button -->
+                <a id="whatsappBtn" href="#" target="_blank" class="btn-ripple block w-full bg-green-500 hover:bg-green-600 text-white text-center py-4 rounded-xl font-bold text-lg shadow-lg shadow-green-500/25">
+                    <i class="fab fa-whatsapp mr-2 text-xl"></i> Request Booking via WhatsApp
+                </a>
+            </div>
+        </div>
+    </div>
 
-function go(){
-  const s=document.getElementById('fS').value.toLowerCase().trim();
-  const fc=document.getElementById('fC').value;
-  const fy=document.getElementById('fY').value;
-  const so=document.getElementById('fSo').value;
-  filt=ALL.filter(r=>{
-    const nm=(r.first+' '+r.last).toLowerCase();
-    return(!s||(nm.includes(s)||r.company.toLowerCase().includes(s)||r.email.toLowerCase().includes(s)||r.country.toLowerCase().includes(s)))
-      &&(!fc||r.country===fc)&&(!fy||r.date.split('/').pop()?.trim()===fy);
-  });
-  const[sk,sd]=so==='date_desc'?['date',-1]:so==='date_asc'?['date',1]:[so,1];
-  filt.sort((a,b)=>{
-    let va,vb;
-    if(sk==='idx'){va=+a.idx;vb=+b.idx;}
-    else if(sk==='name'){va=a.first+a.last;vb=b.first+b.last;}
-    else if(sk==='co'){va=a.company;vb=b.company;}
-    else if(sk==='country'){va=a.country;vb=b.country;}
-    else if(sk==='date'){va=new Date(a.date);vb=new Date(b.date);}
-    else{va=+a.idx;vb=+b.idx;}
-    return va<vb?-sd:va>vb?sd:0;
-  });
-  pg=1;updateKPIs();updateCharts();renderTable();
-  document.getElementById('rCnt').textContent=filt.length+' record'+(filt.length!==1?'s':'');
-}
+    <!-- Calendar Widget (generated by js/calendar-picker.js) -->
 
-function srt(k){
-  document.getElementById('fSo').value=k;
-  document.querySelectorAll('th').forEach(t=>t.classList.remove('sorted'));
-  const th=document.getElementById('h-'+k);if(th)th.classList.add('sorted');
-  go();
-}
+    <!-- ===== JAVASCRIPT ===== -->
+    <script src="js/calendar-picker.js"></script>
+    <script>
+        // ===== LOADING SCREEN =====
+        window.addEventListener('load', () => { setTimeout(() => document.getElementById('loader').classList.add('hidden'), 1200); });
 
-function resetAll(){
-  ['fS','fC','fY'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('fSo').value='idx';
-  document.querySelectorAll('th').forEach(t=>t.classList.remove('sorted'));
-  go();
-}
+        // ===== SEA MIST =====
+        (function() {
+            const c = document.getElementById('mistContainer');
+            if (!c) return;
+            for (let i = 0; i < 20; i++) {
+                const p = document.createElement('div');
+                p.className = 'mist-particle';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.top = 50 + Math.random() * 50 + '%';
+                p.style.setProperty('--mist-x', (Math.random() * 200 - 100) + 'px');
+                p.style.setProperty('--mist-y', -(50 + Math.random() * 100) + 'px');
+                p.style.animationDuration = (4 + Math.random() * 6) + 's';
+                p.style.animationDelay = Math.random() * 8 + 's';
+                p.style.width = p.style.height = (2 + Math.random() * 4) + 'px';
+                c.appendChild(p);
+            }
+        })();
 
-function flash(id,val){
-  const el=document.getElementById(id);
-  el.textContent=typeof val==='number'?val.toLocaleString():val;
-  el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),500);
-}
+        // ===== NAVIGATION =====
+        const nav = document.getElementById('mainNav');
+        window.addEventListener('scroll', () => nav.classList.toggle('scrolled', window.scrollY > 60), { passive: true });
+        document.getElementById('mobileMenuBtn').addEventListener('click', () => document.getElementById('mobileMenu').classList.toggle('open'));
+        document.querySelectorAll('.mobile-nav-link').forEach(l => l.addEventListener('click', () => document.getElementById('mobileMenu').classList.remove('open')));
 
-function updateKPIs(){
-  flash('kT',filt.length);
-  flash('kC',new Set(filt.map(r=>r.country)).size);
-  flash('kCo',new Set(filt.map(r=>r.company)).size);
-  const ds=filt.map(r=>new Date(r.date)).filter(d=>!isNaN(d)).sort((a,b)=>b-a);
-  document.getElementById('kD').textContent=ds.length?ds[0].toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
-}
+        // ===== SCROLL REVEAL =====
+        const ro = new IntersectionObserver((entries) => { entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); ro.unobserve(e.target); } }); }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+        document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale').forEach(el => ro.observe(el));
 
-const PAL=['#10b981','#818cf8','#f59e0b','#f87171','#38bdf8','#a78bfa','#fb923c','#c084fc'];
+        // ===== STAT COUNTERS =====
+        const sro = new IntersectionObserver((entries) => {
+            entries.forEach(e => {
+                if (e.isIntersecting) {
+                    const el = e.target, target = parseFloat(el.dataset.target), isD = el.dataset.decimal === 'true', dur = 1500, start = performance.now(), suf = target >= 100 ? '+' : '';
+                    (function anim(now) { const p = Math.min((now - start) / dur, 1), v = 1 - Math.pow(1 - p, 3); el.textContent = (isD ? (v * target).toFixed(1) : Math.floor(v * target).toLocaleString()) + suf; if (p < 1) requestAnimationFrame(anim); })(start);
+                    sro.unobserve(el);
+                }
+            });
+        }, { threshold: 0.5 });
+        document.querySelectorAll('.stat-number[data-target]').forEach(el => sro.observe(el));
 
-function updateCharts(){
-  const yc={};
-  filt.forEach(r=>{const y=r.date.split('/').pop()?.trim();if(y)yc[y]=(yc[y]||0)+1;});
-  const yrs=Object.keys(yc).sort();
-  const yCol={'2020':'#10b981','2021':'#f59e0b','2022':'#818cf8'};
-  if(cY)cY.destroy();
-  cY=new Chart(document.getElementById('cY'),{type:'bar',data:{labels:yrs,datasets:[{data:yrs.map(y=>yc[y]),backgroundColor:yrs.map(y=>yCol[y]||'#10b981'),borderRadius:7,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#64748b',font:{size:11}}},y:{grid:{color:'#f1f5f9'},ticks:{color:'#64748b',font:{size:11}},beginAtZero:true}}}});
+        // ===== FILTER CARS =====
+        function filterCars(cat) {
+            document.querySelectorAll('.filter-btn').forEach(b => { b.classList.remove('bg-primary', 'text-white', 'shadow-md'); b.classList.add('bg-white', 'text-gray-600'); });
+            event.target.classList.remove('bg-white', 'text-gray-600');
+            event.target.classList.add('bg-primary', 'text-white', 'shadow-md');
+            document.querySelectorAll('.car-card').forEach(c => c.style.display = (cat === 'all' || c.dataset.category === cat) ? '' : 'none');
+        }
 
-  const cc={};
-  filt.forEach(r=>{if(r.country)cc[r.country]=(cc[r.country]||0)+1;});
-  const top=Object.entries(cc).sort((a,b)=>b[1]-a[1]).slice(0,8);
-  if(cCo)cCo.destroy();
-  cCo=new Chart(document.getElementById('cCo'),{type:'doughnut',data:{labels:top.map(([c])=>c),datasets:[{data:top.map(([,v])=>v),backgroundColor:PAL,borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{display:true,position:'right',labels:{color:'#64748b',font:{size:10},padding:7,boxWidth:9,boxHeight:9,usePointStyle:true}}}}});
-}
+        // ===== BUTTON RIPPLE =====
+        document.addEventListener('click', (e) => {
+            const b = e.target.closest('.btn-ripple');
+            if (!b) return;
+            const s = document.createElement('span');
+            s.className = 'ripple-effect';
+            const r = b.getBoundingClientRect(), sz = Math.max(r.width, r.height);
+            s.style.width = s.style.height = sz + 'px';
+            s.style.left = (e.clientX - r.left - sz / 2) + 'px';
+            s.style.top = (e.clientY - r.top - sz / 2) + 'px';
+            b.appendChild(s);
+            s.addEventListener('animationend', () => s.remove());
+        });
 
-function renderTable(){
-  const st=(pg-1)*PG,slice=filt.slice(st,st+PG);
-  document.getElementById('rowCount').textContent=ALL.length+' total rows';
-  const tb=document.getElementById('tB');
-  if(!slice.length){tb.innerHTML='<tr><td colspan="6"><div class="empty">No records match the current filters.</div></td></tr>';}
-  else tb.innerHTML=slice.map(r=>{const yr=r.date.split('/').pop()?.trim()||'';return`<tr><td class="ti">${r.idx}</td><td class="tn">${r.first} ${r.last}</td><td class="tco" title="${r.company}">${r.company||'—'}</td><td>${r.country||'—'}</td><td class="tem">${r.email||'—'}</td><td class="tdt"><span class="yb y${yr}">${r.date}</span></td></tr>`;}).join('');
-  const tot=Math.ceil(filt.length/PG);
-  document.getElementById('pI').textContent=`${st+1}–${Math.min(st+PG,filt.length)} of ${filt.length}`;
-  let h=`<button class="pb" onclick="gp(${pg-1})" ${pg<=1?'disabled':''}>← Prev</button>`;
-  for(let i=Math.max(1,pg-2);i<=Math.min(tot,pg+2);i++)h+=`<button class="pb${i===pg?' active':''}" onclick="gp(${i})">${i}</button>`;
-  h+=`<button class="pb" onclick="gp(${pg+1})" ${pg>=tot?'disabled':''}>Next →</button>`;
-  document.getElementById('pC').innerHTML=h;
-}
+        // ===== CAR DATA =====
+        const defaultCars = {
+            1: { name: "Toyota Camry 2024", image: "https://images.unsplash.com/photo-1549317661-bd32c8ce0abb?w=800&h=500&fit=crop", price: 150, transmission: "Automatic", seats: "5 Seats", fuel: "Petrol", description: "Experience the perfect blend of luxury and performance with the Toyota Camry 2024. Ideal for business trips and family outings." },
+            2: { name: "Honda CR-V 2024", image: "https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=800&h=500&fit=crop", price: 220, transmission: "Automatic", seats: "7 Seats", fuel: "Petrol", description: "The Honda CR-V 2024 combines spaciousness with modern technology. Perfect for family trips." },
+            3: { name: "BMW M4 Competition", image: "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=800&h=500&fit=crop", price: 450, transmission: "Automatic", seats: "4 Seats", fuel: "Petrol", description: "Unleash the power of the BMW M4 Competition. 503 horsepower and precision handling." },
+            4: { name: "Toyota Alphard 2023", image: "https://images.unsplash.com/photo-1549317661-bd32c8ce0abb?w=800&h=500&fit=crop", price: 350, transmission: "Automatic", seats: "7 Seats", fuel: "Petrol", description: "Travel in ultimate comfort with the Toyota Alphard. Luxury MPV with premium seating." },
+            5: { name: "Mercedes C300 2024", image: "https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800&h=500&fit=crop", price: 280, transmission: "Automatic", seats: "5 Seats", fuel: "Petrol", description: "The Mercedes-Benz C300 embodies elegance and innovation. Luxurious interior." },
+            6: { name: "Mazda CX-5 2023", image: "https://images.unsplash.com/photo-1606611013016-969c19ba27c9?w=800&h=500&fit=crop", price: 180, transmission: "Automatic", seats: "5 Seats", fuel: "Petrol", description: "Currently under maintenance. Sporty driving feel with premium build quality." }
+        };
+        const savedFleet = JSON.parse(localStorage.getItem('anbelFleet') || 'null');
+        const cars = savedFleet ? Object.fromEntries(savedFleet.map(function(c, i) { return [i + 1, { name: c.name, image: c.image || defaultCars[i+1]?.image || '', price: c.price, transmission: c.transmission || 'Automatic', seats: c.seats || '5 Seats', fuel: c.fuel || 'Petrol', description: c.description || '' }]; })) : defaultCars;
 
-function gp(p){const m=Math.ceil(filt.length/PG);if(p<1||p>m)return;pg=p;renderTable();}
+        // ===== AVAILABILITY CHECK =====
+        function isVehicleBooked(vehicle, newStart, newEnd, excludeRef) {
+            var allBookings = JSON.parse(localStorage.getItem('anbelBookings') || '[]');
+            var ns = new Date(newStart).getTime();
+            var ne = new Date(newEnd).getTime();
+            for (var i = 0; i < allBookings.length; i++) {
+                var b = allBookings[i];
+                if (b.vehicle !== vehicle) continue;
+                if (b.status === 'canceled') continue;
+                if (excludeRef && b.ref === excludeRef) continue;
+                var bs = new Date(b.start + 'T' + (b.startTime || '10:00')).getTime();
+                var be = new Date(b.end + 'T' + (b.endTime || '10:00')).getTime();
+                if (ns < be && bs < ne) return b;
+            }
+            return null;
+        }
 
-// Boot: load baked instantly, then auto-sync
-ALL=fromBaked(BAKED);
-populateCountries();go();
-document.getElementById('syncStatus').textContent=ALL.length+' records loaded · click Sync to get latest data';
-syncFromSheet();
-</script>
+        // ===== MODAL =====
+        let currentCarId = null;
+        function openCarModal(id) {
+            const car = cars[id]; if (!car) return;
+            currentCarId = id;
+            document.getElementById('modalCarName').textContent = car.name;
+            document.getElementById('modalCarImage').src = car.image;
+            document.getElementById('modalCarImage').alt = car.name;
+            document.getElementById('modalPrice').textContent = 'RM ' + car.price;
+            document.getElementById('modalTransmission').textContent = car.transmission;
+            document.getElementById('modalSeats').textContent = car.seats;
+            document.getElementById('modalFuel').textContent = car.fuel;
+            document.getElementById('modalDescription').textContent = car.description;
+            // Reset date fields
+            document.getElementById('pickupDate').value = '';
+            document.getElementById('pickupTime').value = '';
+            document.getElementById('returnDate').value = '';
+            document.getElementById('returnTime').value = '';
+            document.getElementById('pickupDatesDisplay').value = '';
+            document.getElementById('bookingSummary').classList.add('hidden');
+            document.getElementById('dateError').classList.add('hidden');
+            document.getElementById('availIndicator').classList.add('hidden');
+            const modal = document.getElementById('carModal');
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+            requestAnimationFrame(() => modal.classList.add('active'));
+            document.body.style.overflow = 'hidden';
+        }
+        function closeCarModal() {
+            const m = document.getElementById('carModal');
+            m.classList.remove('active');
+            setTimeout(() => { m.classList.add('hidden'); m.classList.remove('flex'); document.body.style.overflow = ''; }, 300);
+        }
+        document.getElementById('carModal').addEventListener('click', function(e) { if (e.target === this) closeCarModal(); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { CalendarPicker.close(); closeCarModal(); } });
+
+        // ===== BOOKING SUMMARY CALCULATION =====
+        function updateSummary() {
+            const pDate = document.getElementById('pickupDate').value;
+            const pTime = document.getElementById('pickupTime').value;
+            const rDate = document.getElementById('returnDate').value;
+            const rTime = document.getElementById('returnTime').value;
+            const errEl = document.getElementById('dateError');
+            const sumEl = document.getElementById('bookingSummary');
+            const errTxt = document.getElementById('dateErrorText');
+            const availEl = document.getElementById('availIndicator');
+
+            if (!pDate || !pTime || !rDate || !rTime) { sumEl.classList.add('hidden'); availEl.classList.add('hidden'); return; }
+
+            const pickup = new Date(pDate + 'T' + pTime);
+            const ret = new Date(rDate + 'T' + rTime);
+
+            if (ret <= pickup) {
+                errEl.classList.remove('hidden');
+                errTxt.textContent = 'Return date/time must be after pickup date/time.';
+                sumEl.classList.add('hidden');
+                availEl.classList.add('hidden');
+                return;
+            }
+
+            const diffMs = ret - pickup;
+            if (diffMs < 86400000) {
+                errEl.classList.remove('hidden');
+                errTxt.textContent = 'Minimum rental period is 24 hours.';
+                sumEl.classList.add('hidden');
+                availEl.classList.add('hidden');
+                return;
+            }
+
+            const diffDays = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+            const car = cars[currentCarId];
+            const total = diffDays * car.price;
+
+            const fmtDate = (d) => d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+            const fmtTime = (t) => { const [h, m] = t.split(':'); const hr = parseInt(h); const hr12 = hr > 12 ? hr - 12 : (hr === 0 ? 12 : hr); return hr12 + ':' + m + ' ' + (hr >= 12 ? 'PM' : 'AM'); };
+
+            document.getElementById('summaryCar').textContent = car.name;
+            document.getElementById('summaryPickup').textContent = fmtDate(pickup) + ' at ' + fmtTime(pTime);
+            document.getElementById('summaryReturn').textContent = fmtDate(ret) + ' at ' + fmtTime(rTime);
+            document.getElementById('summaryDuration').textContent = diffDays + ' day' + (diffDays > 1 ? 's' : '');
+            document.getElementById('summaryRate').textContent = 'RM ' + car.price + '/day';
+            document.getElementById('summaryTotal').textContent = 'RM ' + total.toLocaleString();
+
+            errEl.classList.add('hidden');
+            sumEl.classList.remove('hidden');
+
+            // Check vehicle availability
+            const conflict = isVehicleBooked(car.name, pDate + 'T' + pTime, rDate + 'T' + rTime, null);
+            const whatsappBtn = document.getElementById('whatsappBtn');
+            if (conflict) {
+                availEl.classList.remove('hidden');
+                availEl.innerHTML = '<div class="flex items-center gap-2 text-red-600 text-sm bg-red-50 px-4 py-3 rounded-xl border border-red-100"><i class="fas fa-exclamation-circle text-lg"></i><span><strong>Vehicle unavailable</strong> for selected dates — please try different dates</span></div>';
+                whatsappBtn.classList.add('opacity-50', 'pointer-events-none');
+                whatsappBtn.href = '#';
+            } else {
+                availEl.classList.remove('hidden');
+                availEl.innerHTML = '<div class="flex items-center gap-2 text-green-600 text-sm bg-green-50 px-4 py-3 rounded-xl border border-green-100"><i class="fas fa-check-circle text-lg"></i><span><strong>Vehicle available</strong> for your selected dates</span></div>';
+                whatsappBtn.classList.remove('opacity-50', 'pointer-events-none');
+            }
+
+            // Build WhatsApp link
+            const msg = encodeURIComponent(
+                "Hi! I'd like to book the " + car.name + ".\n\n" +
+                "Pickup: " + fmtDate(pickup) + " at " + fmtTime(pTime) + "\n" +
+                "Return: " + fmtDate(ret) + " at " + fmtTime(rTime) + "\n" +
+                "Duration: " + diffDays + " day(s)\n" +
+                "Rate: RM " + car.price + "/day\n" +
+                "Total: RM " + total.toLocaleString() + "\n\n" +
+                "Please confirm availability. Thank you!"
+            );
+            if (!conflict) whatsappBtn.href = 'https://wa.me/60123456789?text=' + msg;
+        }
+
+
+        // ===== SETTINGS CONTENT RENDERER =====
+        function getS(key, fallback) {
+            try {
+                var s = JSON.parse(localStorage.getItem('anbelSettings') || '{}');
+                return s[key] !== undefined ? s[key] : fallback;
+            } catch { return fallback; }
+        }
+        function renderAboutContent() {
+            var headingEl = document.getElementById('aboutHeading');
+            var descEl = document.getElementById('aboutDesc');
+            var featuresEl = document.getElementById('aboutFeatures');
+            var imageEl = document.getElementById('aboutImage');
+            if (headingEl) headingEl.textContent = getS('aboutHeading', 'Why Choose Anbel Car Rental?');
+            if (descEl) descEl.textContent = getS('aboutDesc', 'Anbel Car Rental is a freshly established, SSM-registered car rental company built for the modern traveller.');
+            if (imageEl) { var img = getS('aboutImage', ''); if (img) imageEl.src = img; }
+            if (featuresEl) {
+                var features = getS('aboutFeatures', [
+                    { icon: 'fa-sparkles', title: 'Fresh Modern Fleet', desc: 'All vehicles are recent models, impeccably maintained and thoroughly inspected.' },
+                    { icon: 'fa-receipt', title: 'Transparent Pricing', desc: 'What you see is what you pay. No hidden charges, no surprises at checkout.' },
+                    { icon: 'fab fa-whatsapp', title: 'WhatsApp Booking', desc: 'Book, confirm, and manage your rental instantly via WhatsApp.' }
+                ]);
+                featuresEl.innerHTML = features.map(function(f) {
+                    return '<div class="flex items-start gap-4 group">' +
+                        '<div class="bg-primary/10 p-3.5 rounded-2xl group-hover:bg-primary group-hover:text-white transition-all duration-300"><i class="' + (f.icon || 'fas fa-check') + ' text-primary text-xl group-hover:text-white transition-colors"></i></div>' +
+                        '<div><h4 class="font-bold text-gray-800">' + (f.title || '') + '</h4><p class="text-gray-500 text-sm mt-1">' + (f.desc || '') + '</p></div>' +
+                        '</div>';
+                }).join('');
+            }
+        }
+        renderAboutContent();
+
+        function renderFooterContent() {
+            var bizEl = document.getElementById('footerBizName');
+            var tagEl = document.getElementById('footerTag');
+            var phoneEl = document.getElementById('footerPhone');
+            var addrEl = document.getElementById('footerAddress');
+            var ssmEl = document.getElementById('footerSSMBar');
+            var copyEl = document.getElementById('footerCopyright');
+            if (bizEl) bizEl.textContent = getS('bizName', 'Anbel Car Rental');
+            if (tagEl) tagEl.textContent = getS('footerTag', 'Premium car rental service with the best prices and well-maintained vehicles.');
+            if (phoneEl) phoneEl.textContent = getS('phone', '+601-2345-6789');
+            if (addrEl) addrEl.textContent = getS('address', '123 Rental Street, Kuala Lumpur');
+            if (ssmEl) ssmEl.textContent = 'SSM: ' + getS('ssm', '202603164986 (LA0090677-P)');
+            if (copyEl) copyEl.textContent = getS('copyright', '\u00a9 2026 Anbel Car Rental Enterprise. All rights reserved.');
+        }
+        renderFooterContent();
+
+        // Hero badge
+        var heroBadge = document.getElementById('heroBadge');
+        if (heroBadge) heroBadge.innerHTML = '<i class="fas fa-certificate mr-2 text-accent"></i>' + getS('badge', 'Malaysia\'s Trusted Car Rental');
+
+        // ===== SHARED CALENDAR PICKER =====
+        CalendarPicker.init({
+            triggers: [{
+                selector: '[data-cal-open="customer"]',
+                mode: 'customer',
+                fields: { display: 'pickupDatesDisplay', startDate: 'pickupDate', endDate: 'returnDate', startTime: 'pickupTime', endTime: 'returnTime' },
+                getVehicle: function() { return cars && cars[currentCarId] ? cars[currentCarId].name : ''; },
+                getExcludeRef: function() { return null; },
+                onConfirm: function(d) { updateSummary(); }
+            }]
+        });
+
+        // ===== SMOOTH SCROLL =====
+        document.querySelectorAll('a[href^="#"]').forEach(a => {
+            a.addEventListener('click', function(e) {
+                const t = document.querySelector(this.getAttribute('href'));
+                if (t) { e.preventDefault(); window.scrollTo({ top: t.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' }); }
+            });
+        });
+    </script>
 </body>
 </html>
