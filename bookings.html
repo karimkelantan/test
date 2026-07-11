@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anbel Car Rental - Bookings Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e40af',
+                        'primary-dark': '#1e3a8a',
+                        accent: '#f59e0b',
+                        sidebar: '#0f172a',
+                        'sidebar-hover': '#1e293b',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .history-timeline { position: relative; padding-left: 28px; }
+        .history-timeline::before { content:''; position:absolute; left:9px; top:0; bottom:0; width:2px; background:#e5e7eb; }
+        .history-item { position: relative; padding-bottom: 20px; }
+        .history-item:last-child { padding-bottom: 0; }
+        .history-dot { position:absolute; left:-23px; top:4px; width:12px; height:12px; border-radius:50%; border:2px solid white; box-shadow: 0 0 0 2px #e5e7eb; }
+        .history-dot.dot-green { background:#22c55e; box-shadow: 0 0 0 2px #22c55e33; }
+        .history-dot.dot-blue { background:#3b82f6; box-shadow: 0 0 0 2px #3b82f633; }
+        .history-dot.dot-amber { background:#f59e0b; box-shadow: 0 0 0 2px #f59e0b33; }
+        .history-dot.dot-red { background:#ef4444; box-shadow: 0 0 0 2px #ef444433; }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed left-0 top-0 h-full bg-sidebar text-white z-40 transition-all duration-300 w-[85vw] max-w-xs lg:w-64">
+        <div class="flex items-center justify-between px-6 py-5 border-b border-gray-700/50">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-car-side text-accent text-2xl"></i>
+                <span class="text-lg font-bold sidebar-text">Anbel Car Rental</span>
+            </div>
+            <button data-sidebar-toggle class="text-gray-400 hover:text-white lg:hidden"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <div class="px-6 py-4 border-b border-gray-700/50">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center"><i class="fas fa-user text-white text-sm"></i></div>
+                <div class="sidebar-text">
+                    <div class="font-semibold text-sm" data-user-name>Admin User</div>
+                    <div class="text-xs text-gray-400" data-user-role>Administrator</div>
+                </div>
+            </div>
+        </div>
+        <nav id="sidebarNav" class="py-4"></nav>
+        <div class="absolute bottom-0 w-full border-t border-gray-700/50 p-4">
+            <a href="login.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-red-500/20 hover:text-red-400 transition rounded-xl">
+                <i class="fas fa-sign-out-alt w-5"></i><span class="sidebar-text">Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden" data-sidebar-toggle></div>
+
+    <!-- Main Content -->
+    <div class="lg:ml-64 min-h-screen">
+
+        <!-- Top Bar -->
+        <header class="bg-white shadow-sm sticky top-0 z-20">
+            <div class="px-4 sm:px-6 py-3 sm:py-4">
+                <div class="flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <button data-sidebar-toggle class="lg:hidden text-gray-600 hover:text-primary flex-shrink-0"><i class="fas fa-bars text-xl"></i></button>
+                        <div class="min-w-0">
+                            <h1 class="text-lg sm:text-xl font-bold text-gray-800 truncate">Bookings Management</h1>
+                            <p class="text-xs sm:text-sm text-gray-500 truncate hidden sm:block">Manage all bookings and create new rentals</p>
+                        </div>
+                    </div>
+                    <div class="hidden sm:flex items-center gap-2 flex-shrink-0">
+                        <button onclick="openActivityLog()" class="border border-gray-200 text-gray-600 px-4 py-2 rounded-xl font-medium transition flex items-center gap-2 text-sm hover:bg-gray-50 whitespace-nowrap">
+                            <i class="fas fa-history"></i> Activity Log
+                        </button>
+                        <button onclick="openNewBookingModal()" class="bg-primary hover:bg-primary-dark text-white px-5 py-2 rounded-xl font-medium transition flex items-center gap-2 shadow-sm whitespace-nowrap">
+                            <i class="fas fa-plus"></i> New Booking
+                        </button>
+                    </div>
+                </div>
+                <div class="flex sm:hidden gap-2 mt-2">
+                    <button onclick="openActivityLog()" class="flex-1 border border-gray-200 text-gray-600 px-3 py-2.5 rounded-xl font-medium transition flex items-center justify-center gap-1.5 text-sm hover:bg-gray-50">
+                        <i class="fas fa-history"></i> Activity Log
+                    </button>
+                    <button onclick="openNewBookingModal()" class="flex-[2] bg-primary hover:bg-primary-dark text-white px-3 py-2.5 rounded-xl font-medium transition flex items-center justify-center gap-1.5 text-sm shadow-sm">
+                        <i class="fas fa-plus"></i> New Booking
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="p-6">
+
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+                <div class="bg-white rounded-xl shadow-sm p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center"><i class="fas fa-exclamation-circle text-amber-500"></i></div>
+                        <div><div class="text-2xl font-bold text-gray-800" id="statPending">3</div><div class="text-xs text-gray-500">Pending</div></div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center"><i class="fas fa-clock text-blue-500"></i></div>
+                        <div><div class="text-2xl font-bold text-gray-800" id="statUpcoming">2</div><div class="text-xs text-gray-500">Upcoming</div></div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center"><i class="fas fa-car text-green-500"></i></div>
+                        <div><div class="text-2xl font-bold text-gray-800" id="statOngoing">2</div><div class="text-xs text-gray-500">Ongoing</div></div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center"><i class="fas fa-check-circle text-emerald-500"></i></div>
+                        <div><div class="text-2xl font-bold text-gray-800" id="statComplete">2</div><div class="text-xs text-gray-500">Complete</div></div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center"><i class="fas fa-times-circle text-red-500"></i></div>
+                        <div><div class="text-2xl font-bold text-gray-800" id="statCanceled">1</div><div class="text-xs text-gray-500">Canceled</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters & Search -->
+            <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+                <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="filterBookings('all')" class="filter-btn active bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium transition">All</button>
+                        <button onclick="filterBookings('pending')" class="filter-btn bg-gray-100 text-gray-600 hover:bg-amber-100 hover:text-amber-600 px-4 py-2 rounded-lg text-sm font-medium transition">Pending</button>
+                        <button onclick="filterBookings('upcoming')" class="filter-btn bg-gray-100 text-gray-600 hover:bg-blue-100 hover:text-blue-600 px-4 py-2 rounded-lg text-sm font-medium transition">Upcoming</button>
+                        <button onclick="filterBookings('ongoing')" class="filter-btn bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-600 px-4 py-2 rounded-lg text-sm font-medium transition">Ongoing</button>
+                        <button onclick="filterBookings('complete')" class="filter-btn bg-gray-100 text-gray-600 hover:bg-emerald-100 hover:text-emerald-600 px-4 py-2 rounded-lg text-sm font-medium transition">Complete</button>
+                        <button onclick="filterBookings('canceled')" class="filter-btn bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-600 px-4 py-2 rounded-lg text-sm font-medium transition">Canceled</button>
+                    </div>
+                    <div class="relative w-full md:w-80">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="searchInput" placeholder="Search by name or ref..." class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary" oninput="searchBookings()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bookings List -->
+            <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+                <!-- Table (desktop) -->
+                <div class="hidden lg:block overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="sticky top-0 z-10 bg-gray-50 border-b">
+                            <tr>
+                                <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-[140px]">Booking Ref</th>
+                                <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer</th>
+                                <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-[160px]">Vehicle</th>
+                                <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Pickup / Return</th>
+                                <th class="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-[100px]">Amount</th>
+                                <th class="text-center px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-[100px]">Status</th>
+                                <th class="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-[120px]">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100" id="bookingsBody">
+                            <!-- Rows rendered by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Cards (mobile/tablet) -->
+                <div class="lg:hidden divide-y divide-gray-100" id="bookingsCards">
+                    <!-- Cards rendered by JS -->
+                </div>
+
+                <!-- Empty State -->
+                <div id="bookingsEmpty" class="hidden py-16 text-center">
+                    <i class="fas fa-calendar-times text-5xl text-gray-300 mb-4"></i>
+                    <p class="text-gray-500 text-base mb-4">No bookings found.</p>
+                    <button onclick="openNewBookingModal()" class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-dark transition"><i class="fas fa-plus"></i> New Booking</button>
+                </div>
+
+                <!-- Pagination -->
+                <div class="px-4 sm:px-6 py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div class="text-sm text-gray-500 text-center sm:text-left" id="paginationInfo">Showing 0 of 0 bookings</div>
+                    <div class="flex gap-2 flex-wrap justify-center" id="paginationBtns"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- New Booking Modal (3-Step Wizard) -->
+    <div id="newBookingModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center rounded-t-2xl z-10">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800">New Manual Booking</h3>
+                    <p class="text-sm text-gray-500" id="wizardStepLabel">Step 1 of 3 — Customer Information</p>
+                </div>
+                <button onclick="closeNewBookingModal()" class="text-gray-400 hover:text-red-500 text-xl transition"><i class="fas fa-times"></i></button>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="px-6 pt-4">
+                <div class="flex items-center gap-2 mb-1">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white bg-primary" id="step1Dot">1</div>
+                    <div class="flex-1 h-1 bg-gray-200 rounded" id="step1Bar"><div class="h-1 bg-primary rounded" style="width: 0%" id="step1Fill"></div></div>
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-gray-400 bg-gray-200" id="step2Dot">2</div>
+                    <div class="flex-1 h-1 bg-gray-200 rounded" id="step2Bar"><div class="h-1 bg-primary rounded" style="width: 0%" id="step2Fill"></div></div>
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-gray-400 bg-gray-200" id="step3Dot">3</div>
+                </div>
+                <div class="flex justify-between text-xs text-gray-400 mb-2 px-1">
+                    <span>Customer</span><span>Rental Details</span><span>Review</span>
+                </div>
+            </div>
+
+            <form class="p-6 space-y-5" onsubmit="handleNewBookingSubmit(event)">
+
+                <!-- Step 1: Customer Information -->
+                <div id="wizardStep1">
+                    <h4 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3"><i class="fas fa-user mr-1"></i> Customer Information</h4>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Full Name *</label>
+                            <input type="text" id="newName" required placeholder="Enter customer name" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Phone Number *</label>
+                            <input type="tel" id="newPhone" required placeholder="+6012-345-6789" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">IC / Passport No.</label>
+                            <input type="text" id="newIC" placeholder="Optional" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Email (Optional)</label>
+                            <input type="email" id="newEmail" placeholder="customer@email.com" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Rental Details -->
+                <div id="wizardStep2" class="hidden">
+                    <h4 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3"><i class="fas fa-car mr-1"></i> Rental Details</h4>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Select Vehicle *</label>
+                            <select id="newVehicle" required class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary text-gray-600" onchange="updateNewPriceSummary()">
+                                <option value="">-- Choose a car --</option>
+                                <option value="Toyota Camry 2024|150">Toyota Camry 2024 — RM 150/day</option>
+                                <option value="Honda CR-V 2024|220">Honda CR-V 2024 — RM 220/day</option>
+                                <option value="BMW M4 Competition|450">BMW M4 Competition — RM 450/day</option>
+                                <option value="Toyota Alphard 2023|350">Toyota Alphard 2023 — RM 350/day</option>
+                                <option value="Mercedes C300 2024|280">Mercedes C300 2024 — RM 280/day</option>
+                                <option value="Mazda CX-5 2023|180">Mazda CX-5 2023 — RM 180/day</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Pickup & Return Dates *</label>
+                            <input type="text" id="newDatesDisplay" readonly required placeholder="Click to select pickup & return dates" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary cursor-pointer bg-white" data-cal-open="new">
+                            <input type="hidden" id="newStartDate">
+                            <input type="hidden" id="newEndDate">
+                            <input type="hidden" id="newStartTime">
+                            <input type="hidden" id="newEndTime">
+                        </div>
+                        <div id="newAvailIndicator" class="hidden md:col-span-2"></div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Booking Status</label>
+                            <select id="newStatus" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary text-gray-600">
+                                <option value="pending">Pending (Payment not received)</option>
+                                <option value="upcoming">Upcoming (Payment received)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Deposit Paid (RM)</label>
+                            <input type="number" id="newDeposit" placeholder="0.00" min="0" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary">
+                        </div>
+                    </div>
+                    <!-- Price Summary -->
+                    <div class="bg-gray-50 rounded-xl p-4 mt-4">
+                        <div class="flex justify-between text-sm text-gray-600 mb-1"><span>Daily Rate</span><span id="summaryDailyRate">RM 0</span></div>
+                        <div class="flex justify-between text-sm text-gray-600 mb-1"><span>Duration</span><span id="summaryDuration">0 days</span></div>
+                        <div class="border-t border-gray-200 my-2"></div>
+                        <div class="flex justify-between font-bold text-gray-800"><span>Total Amount</span><span id="summaryTotal">RM 0</span></div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Notes</label>
+                        <textarea id="newNotes" rows="2" placeholder="Any additional notes..." class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary resize-none"></textarea>
+                    </div>
+                </div>
+
+                <!-- Step 3: Review & Confirm -->
+                <div id="wizardStep3" class="hidden">
+                    <h4 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3"><i class="fas fa-clipboard-check mr-1"></i> Review & Confirm</h4>
+                    <div class="bg-gray-50 rounded-xl p-5 space-y-3">
+                        <div class="grid grid-cols-2 gap-3 text-sm">
+                            <div><span class="text-gray-500">Customer:</span></div><div class="font-medium text-gray-800" id="reviewName"></div>
+                            <div><span class="text-gray-500">Phone:</span></div><div class="font-medium text-gray-800" id="reviewPhone"></div>
+                            <div><span class="text-gray-500">Vehicle:</span></div><div class="font-medium text-gray-800" id="reviewVehicle"></div>
+                            <div><span class="text-gray-500">Pickup:</span></div><div class="font-medium text-gray-800" id="reviewStart"></div>
+                            <div><span class="text-gray-500">Return:</span></div><div class="font-medium text-gray-800" id="reviewEnd"></div>
+                            <div><span class="text-gray-500">Duration:</span></div><div class="font-medium text-gray-800" id="reviewDuration"></div>
+                            <div><span class="text-gray-500">Status:</span></div><div class="font-medium" id="reviewStatus"></div>
+                            <div><span class="text-gray-500">Deposit:</span></div><div class="font-medium text-gray-800" id="reviewDeposit"></div>
+                        </div>
+                        <div class="border-t border-gray-200 pt-3 flex justify-between">
+                            <span class="font-bold text-gray-800">Total Amount:</span>
+                            <span class="font-bold text-primary text-lg" id="reviewTotal"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wizard Navigation -->
+                <div class="flex gap-3 pt-2">
+                    <button type="button" id="wizardBack" onclick="wizardNav(-1)" class="hidden flex-1 px-6 py-3 border border-gray-200 text-gray-600 rounded-xl font-medium hover:bg-gray-50 transition">
+                        <i class="fas fa-arrow-left mr-1"></i> Back
+                    </button>
+                    <button type="button" id="wizardNext" onclick="wizardNav(1)" class="flex-1 px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-xl font-medium transition flex items-center justify-center gap-2">
+                        Next <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button type="submit" id="wizardSubmit" class="hidden flex-1 px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-xl font-medium transition flex items-center justify-center gap-2">
+                        <i class="fas fa-check"></i> Create Booking
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Booking Modal -->
+    <div id="editModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center rounded-t-2xl z-10">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800">Edit Booking</h3>
+                    <p class="text-sm text-gray-500" id="editRefLabel">ACR-XXXXXXXX-XXXX</p>
+                </div>
+                <button onclick="closeEditModal()" class="text-gray-400 hover:text-red-500 text-xl transition"><i class="fas fa-times"></i></button>
+            </div>
+            <form class="p-6 space-y-5" onsubmit="handleEditSubmit(event)">
+                <!-- Customer Information -->
+                <div>
+                    <h4 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3"><i class="fas fa-user mr-1"></i> Customer Information</h4>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Full Name *</label>
+                            <input type="text" id="editName" required class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Phone Number *</label>
+                            <input type="tel" id="editPhone" required class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">IC / Passport No.</label>
+                            <input type="text" id="editIC" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Email</label>
+                            <input type="email" id="editEmail" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary">
+                        </div>
+                    </div>
+                </div>
+                <!-- Rental Details -->
+                <div>
+                    <h4 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3"><i class="fas fa-car mr-1"></i> Rental Details</h4>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Vehicle *</label>
+                            <select id="editVehicle" required class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary text-gray-600" onchange="updateEditPriceSummary()">
+                                <option value="">-- Choose a car --</option>
+                                <option value="Toyota Camry 2024|150">Toyota Camry 2024 — RM 150/day</option>
+                                <option value="Honda CR-V 2024|220">Honda CR-V 2024 — RM 220/day</option>
+                                <option value="BMW M4 Competition|450">BMW M4 Competition — RM 450/day</option>
+                                <option value="Toyota Alphard 2023|350">Toyota Alphard 2023 — RM 350/day</option>
+                                <option value="Mercedes C300 2024|280">Mercedes C300 2024 — RM 280/day</option>
+                                <option value="Mazda CX-5 2023|180">Mazda CX-5 2023 — RM 180/day</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Pickup & Return Dates *</label>
+                            <input type="text" id="editDatesDisplay" readonly required placeholder="Click to select pickup & return dates" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary cursor-pointer bg-white" data-cal-open="edit">
+                            <input type="hidden" id="editStartDate">
+                            <input type="hidden" id="editEndDate">
+                            <input type="hidden" id="editStartTime">
+                            <input type="hidden" id="editEndTime">
+                        </div>
+                        <div id="editAvailIndicator" class="hidden md:col-span-2"></div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Booking Status</label>
+                            <select id="editStatus" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary text-gray-600">
+                                <option value="pending">Pending</option>
+                                <option value="upcoming">Upcoming</option>
+                                <option value="ongoing">Ongoing</option>
+                                <option value="complete">Complete</option>
+                                <option value="canceled">Canceled</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Deposit Paid (RM)</label>
+                            <input type="number" id="editDeposit" min="0" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary">
+                        </div>
+                    </div>
+                </div>
+                <!-- Extra Charges & Discount -->
+                <div>
+                    <h4 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3"><i class="fas fa-calculator mr-1"></i> Adjustments (Optional)</h4>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Extra Charges (RM)</label>
+                            <input type="number" id="editExtra" placeholder="0.00" min="0" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary" onchange="updateEditPriceSummary()" oninput="updateEditPriceSummary()">
+                            <p class="text-xs text-gray-400 mt-1">Late fees, damage, fuel, etc.</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Discount — New Daily Rate (RM)</label>
+                            <input type="number" id="editDiscount" placeholder="Leave blank for no discount" min="0" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary" onchange="updateEditPriceSummary()" oninput="updateEditPriceSummary()">
+                            <p class="text-xs text-gray-400 mt-1">Override daily rate (e.g. RM 120 instead of RM 150)</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Notes -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Notes</label>
+                    <textarea id="editNotes" rows="2" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary resize-none"></textarea>
+                </div>
+                <!-- Price Summary -->
+                <div class="bg-gray-50 rounded-xl p-4">
+                    <div class="flex justify-between text-sm text-gray-600 mb-1"><span>Original Daily Rate</span><span id="editOrigRate">RM 0</span></div>
+                    <div class="flex justify-between text-sm text-gray-600 mb-1"><span>Duration</span><span id="editDuration">0 days</span></div>
+                    <div id="editDiscountRow" class="flex justify-between text-sm text-green-600 mb-1 hidden"><span>Discounted Daily Rate</span><span id="editDiscRate">RM 0</span></div>
+                    <div id="editExtraRow" class="flex justify-between text-sm text-amber-600 mb-1 hidden"><span>Extra Charges</span><span id="editExtraAmt">RM 0</span></div>
+                    <div class="border-t border-gray-200 my-2"></div>
+                    <div class="flex justify-between font-bold text-gray-800"><span>Final Total</span><span id="editTotal" class="text-primary">RM 0</span></div>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeEditModal()" class="flex-1 px-6 py-3 border border-gray-200 text-gray-600 rounded-xl font-medium hover:bg-gray-50 transition">Cancel</button>
+                    <button id="editRevertBtn" type="button" onclick="openRevertModalFromEdit()" class="hidden flex-1 px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-medium transition flex items-center justify-center gap-2">
+                        <i class="fas fa-undo"></i> Revert
+                    </button>
+                    <button id="editSubmitBtn" type="submit" class="flex-1 px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-xl font-medium transition flex items-center justify-center gap-2">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Activity Log Modal -->
+    <div id="activityLogModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto">
+            <div class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center rounded-t-2xl z-10">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800"><i class="fas fa-history text-primary mr-2"></i>Activity Log</h3>
+                    <p class="text-sm text-gray-500">Who created, edited, or changed what</p>
+                </div>
+                <button onclick="closeActivityLog()" class="text-gray-400 hover:text-red-500 text-xl transition"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6 space-y-3" id="activityLogContent">
+                <!-- Rendered by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking History Modal -->
+    <div id="bookingHistoryModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto">
+            <div class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center rounded-t-2xl z-10">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800"><i class="fas fa-clock text-purple-500 mr-2"></i>Booking History</h3>
+                    <p class="text-sm text-gray-500" id="historyBookingInfo"></p>
+                </div>
+                <button onclick="closeBookingHistory()" class="text-gray-400 hover:text-red-500 text-xl transition"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6" id="bookingHistoryContent">
+                <!-- Timeline rendered by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancel Confirmation Modal -->
+    <div id="cancelModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 text-center">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle text-red-500 text-3xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Cancel Booking?</h3>
+            <p class="text-gray-500 text-sm mb-6">Are you sure you want to cancel booking <strong id="cancelRefLabel"></strong>? This action cannot be undone.</p>
+            <div class="flex gap-3">
+                <button onclick="closeCancelModal()" class="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl font-medium hover:bg-gray-50 transition">Keep Booking</button>
+                <button onclick="confirmCancel()" class="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition">Yes, Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Revert Status Modal -->
+    <div id="revertModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 text-center">
+            <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-undo text-amber-500 text-3xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Revert Booking Status</h3>
+            <p class="text-gray-500 text-sm mb-1" id="revertRefLabel"></p>
+            <p class="text-gray-400 text-xs mb-4">Currently: <span id="revertCurrentStatus" class="font-bold"></span></p>
+            <p class="text-sm text-gray-600 mb-4">Revert to:</p>
+            <div class="flex flex-wrap gap-2 justify-center mb-4" id="revertOptions"></div>
+            <button onclick="closeRevertModal()" class="w-full px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl font-medium hover:bg-gray-50 transition">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Calendar Widget (generated by js/calendar-picker.js) -->
+
+    <!-- Toast -->
+    <div id="successToast" class="fixed bottom-6 right-6 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <i class="fas fa-check-circle text-xl"></i>
+        <span class="font-medium" id="toastMessage">Done!</span>
+    </div>
+
+    <script src="js/calendar-picker.js"></script>
+    <script>
+        // === VEHICLE DATA ===
+        const vehicles = {
+            'Toyota Camry 2024': 150,
+            'Honda CR-V 2024': 220,
+            'BMW M4 Competition': 450,
+            'Toyota Alphard 2023': 350,
+            'Mercedes C300 2024': 280,
+            'Mazda CX-5 2023': 180
+        };
+
+        // === TIME SLOTS (30-min intervals 7:00 AM to 9:00 PM) ===
+        function generateTimeSlots() {
+            const slots = [];
+            for (let h = 7; h <= 21; h++) {
+                for (let m = 0; m < 60; m += 30) {
+                    if (h === 21 && m > 0) break;
+                    const hh = h.toString().padStart(2, '0');
+                    const mm = m.toString().padStart(2, '0');
+                    const label = (h <= 12 ? h : h - 12) + ':' + mm + (h < 12 ? ' AM' : ' PM');
+                    slots.push({ value: hh + ':' + mm, label: label });
+                }
+            }
+            return slots;
+        }
+        const timeSlots = generateTimeSlots();
+
+        function populateTimeSelect(selectId, defaultVal) {
+            const sel = document.getElementById(selectId);
+            sel.innerHTML = '';
+            timeSlots.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.value;
+                opt.textContent = s.label;
+                if (s.value === defaultVal) opt.selected = true;
+                sel.appendChild(opt);
+            });
+        }
+
+        // === BOOKING DATA (sample) ===
+        let bookings = [
+            { ref:'ACR-20260711-0001', name:'Ahmad Razali', phone:'+6012-345-6789', ic:'', email:'', vehicle:'Toyota Camry 2024', rate:150, start:'2026-07-15', startTime:'10:00', end:'2026-07-18', endTime:'10:00', days:3, total:450, deposit:100, extra:0, discount:0, status:'upcoming', notes:'', createdBy:'Admin User', history:[
+                { action:'created', by:'Admin User', time:'Jul 11, 10:30 AM', detail:'Booking created' },
+                { action:'status_changed', by:'Admin User', time:'Jul 11, 10:31 AM', detail:'pending → upcoming' }
+            ]},
+            { ref:'ACR-20260710-0002', name:'Siti Nurhaliza', phone:'+6013-456-7890', ic:'', email:'', vehicle:'Honda CR-V 2024', rate:220, start:'2026-07-08', startTime:'09:00', end:'2026-07-14', endTime:'09:00', days:6, total:1320, deposit:300, extra:0, discount:0, status:'ongoing', notes:'Repeat customer', createdBy:'Staff Ahmad', history:[
+                { action:'created', by:'Staff Ahmad', time:'Jul 8, 9:00 AM', detail:'Booking created' },
+                { action:'status_changed', by:'Staff Ahmad', time:'Jul 8, 9:01 AM', detail:'pending → upcoming' },
+                { action:'edited', by:'Staff Ahmad', time:'Jul 10, 9:15 AM', detail:'period: Jul 8-13 → Jul 8-14, days: 5 → 6' },
+                { action:'status_changed', by:'Admin User', time:'Jul 10, 2:00 PM', detail:'upcoming → ongoing' }
+            ]},
+            { ref:'ACR-20260710-0003', name:'Muhammad Faiz', phone:'+6014-567-8901', ic:'', email:'', vehicle:'BMW M4 Competition', rate:450, start:'2026-07-10', startTime:'14:00', end:'2026-07-12', endTime:'14:00', days:2, total:900, deposit:200, extra:0, discount:0, status:'ongoing', notes:'', createdBy:'Admin User', history:[
+                { action:'created', by:'Admin User', time:'Jul 10, 11:00 AM', detail:'Booking created' },
+                { action:'status_changed', by:'Admin User', time:'Jul 10, 11:01 AM', detail:'pending → upcoming' },
+                { action:'status_changed', by:'Admin User', time:'Jul 10, 2:00 PM', detail:'upcoming → ongoing' }
+            ]},
+            { ref:'ACR-20260707-0004', name:'Lim Wei Ming', phone:'+6016-789-0123', ic:'', email:'', vehicle:'Mercedes C300 2024', rate:280, start:'2026-07-01', startTime:'10:00', end:'2026-07-05', endTime:'10:00', days:4, total:1120, deposit:500, extra:0, discount:0, status:'complete', notes:'', createdBy:'Admin User', history:[
+                { action:'created', by:'Admin User', time:'Jul 1, 9:00 AM', detail:'Booking created' },
+                { action:'status_changed', by:'Admin User', time:'Jul 1, 9:01 AM', detail:'pending → upcoming' },
+                { action:'status_changed', by:'Admin User', time:'Jul 1, 10:00 AM', detail:'upcoming → ongoing' },
+                { action:'status_changed', by:'Admin User', time:'Jul 5, 5:30 PM', detail:'ongoing → complete' }
+            ]},
+            { ref:'ACR-20260705-0005', name:'Priya Sharma', phone:'+6017-890-1234', ic:'', email:'', vehicle:'Toyota Alphard 2023', rate:350, start:'2026-07-03', startTime:'08:00', end:'2026-07-05', endTime:'08:00', days:2, total:700, deposit:0, extra:0, discount:0, status:'canceled', notes:'Customer changed plans', createdBy:'Staff Ahmad', history:[
+                { action:'created', by:'Staff Ahmad', time:'Jul 3, 8:00 AM', detail:'Booking created' },
+                { action:'status_changed', by:'Staff Ahmad', time:'Jul 3, 8:01 AM', detail:'pending → upcoming' },
+                { action:'canceled', by:'Staff Ahmad', time:'Jul 4, 11:00 AM', detail:'Booking canceled — Customer changed plans' }
+            ]},
+            { ref:'ACR-20260704-0006', name:'Tan Kah Hoe', phone:'+6018-901-2345', ic:'', email:'', vehicle:'Mazda CX-5 2023', rate:180, start:'2026-07-20', startTime:'11:00', end:'2026-07-23', endTime:'11:00', days:3, total:540, deposit:100, extra:0, discount:0, status:'upcoming', notes:'', createdBy:'Admin User', history:[
+                { action:'created', by:'Admin User', time:'Jul 4, 3:00 PM', detail:'Booking created' },
+                { action:'status_changed', by:'Admin User', time:'Jul 4, 3:01 PM', detail:'pending → upcoming' }
+            ]},
+            { ref:'ACR-20260701-0007', name:'Raj Anand', phone:'+6011-012-3456', ic:'', email:'', vehicle:'Toyota Camry 2024', rate:150, start:'2026-06-28', startTime:'09:00', end:'2026-07-01', endTime:'09:00', days:3, total:450, deposit:100, extra:0, discount:0, status:'complete', notes:'', createdBy:'Staff Ahmad', history:[
+                { action:'created', by:'Staff Ahmad', time:'Jun 28, 9:00 AM', detail:'Booking created' },
+                { action:'status_changed', by:'Staff Ahmad', time:'Jun 28, 9:01 AM', detail:'pending → upcoming' },
+                { action:'status_changed', by:'Staff Ahmad', time:'Jun 28, 9:30 AM', detail:'upcoming → ongoing' },
+                { action:'status_changed', by:'Staff Ahmad', time:'Jul 1, 10:00 AM', detail:'ongoing → complete' }
+            ]},
+            { ref:'ACR-20260711-0008', name:'Nurul Izzah', phone:'+6019-123-4567', ic:'', email:'', vehicle:'Toyota Camry 2024', rate:150, start:'2026-07-12', startTime:'08:00', end:'2026-07-14', endTime:'08:00', days:2, total:300, deposit:0, extra:0, discount:0, status:'pending', notes:'Awaiting bank transfer confirmation', createdBy:'Admin User', history:[
+                { action:'created', by:'Admin User', time:'Jul 11, 11:00 AM', detail:'Booking created — Awaiting bank transfer confirmation' }
+            ]}
+        ];
+
+        // === ACTIVITY LOG DATA ===
+        let activityLog = [
+            { action:'created', ref:'ACR-20260711-0008', staff:'Admin User', detail:'Nurul Izzah, Toyota Camry 2024', time:'Today, 11:00 AM' },
+            { action:'created', ref:'ACR-20260711-0001', staff:'Admin User', detail:'Ahmad Razali, Toyota Camry 2024', time:'Today, 10:30 AM' },
+            { action:'edited', ref:'ACR-20260710-0002', staff:'Staff Ahmad', detail:'Updated rental period, Siti Nurhaliza', time:'Today, 9:15 AM' },
+            { action:'status_changed', ref:'ACR-20260710-0003', staff:'Admin User', detail:'changed to ongoing, Muhammad Faiz, BMW M4 Competition', time:'Yesterday, 2:00 PM' },
+            { action:'canceled', ref:'ACR-20260705-0005', staff:'Staff Ahmad', detail:'Priya Sharma, Toyota Alphard 2023', time:'Yesterday, 11:00 AM' },
+            { action:'status_changed', ref:'ACR-20260707-0004', staff:'Admin User', detail:'changed to complete, Lim Wei Ming, Mercedes C300 2024', time:'Jul 5, 5:30 PM' },
+        ];
+
+        let currentEditRef = null;
+        let cancelTargetRef = null;
+        let wizardStep = 1;
+        let wizardData = {};
+
+        // === RENDER BOOKINGS ===
+        function buildActionsHTML(b) {
+            var h = '<button onclick="openBookingHistory(\'' + b.ref + '\')" class="text-gray-400 hover:text-purple-500 transition" title="History"><i class="fas fa-clock"></i></button>';
+            if (b.status === 'pending' || b.status === 'upcoming') {
+                if (RBAC.can('booking:edit')) {
+                    h += '<button onclick="openEditModal(\'' + b.ref + '\')" class="text-gray-400 hover:text-blue-500 transition" title="Edit"><i class="fas fa-edit"></i></button>';
+                }
+                h += '<button onclick="openCancelModal(\'' + b.ref + '\')" class="text-gray-400 hover:text-red-500 transition" title="Cancel"><i class="fas fa-ban"></i></button>';
+            } else if (b.status === 'ongoing') {
+                if (RBAC.can('booking:edit')) {
+                    h += '<button onclick="openEditModal(\'' + b.ref + '\')" class="text-gray-400 hover:text-blue-500 transition" title="Edit"><i class="fas fa-edit"></i></button>';
+                }
+                h += '<button onclick="markComplete(\'' + b.ref + '\')" class="text-gray-400 hover:text-emerald-500 transition" title="Mark Complete"><i class="fas fa-check-circle"></i></button>';
+            } else {
+                h += '<button onclick="openEditModal(\'' + b.ref + '\')" class="text-gray-400 hover:text-gray-600 transition" title="View"><i class="fas fa-eye"></i></button>';
+                if (RBAC.can('booking:edit')) {
+                    h += '<button onclick="openRevertModal(\'' + b.ref + '\')" class="text-gray-400 hover:text-amber-500 transition" title="Revert"><i class="fas fa-undo"></i></button>';
+                }
+            }
+            return h;
+        }
+
+        function buildCardActions(b) {
+            var h = '<button onclick="openBookingHistory(\'' + b.ref + '\')" class="flex-1 px-3 py-2 text-xs font-semibold rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition">History</button>';
+            if (b.status === 'pending' || b.status === 'upcoming') {
+                if (RBAC.can('booking:edit')) {
+                    h += '<button onclick="openEditModal(\'' + b.ref + '\')" class="flex-1 px-3 py-2 text-xs font-semibold rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition">Edit</button>';
+                }
+                h += '<button onclick="openCancelModal(\'' + b.ref + '\')" class="flex-1 px-3 py-2 text-xs font-semibold rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition">Cancel</button>';
+            } else if (b.status === 'ongoing') {
+                if (RBAC.can('booking:edit')) {
+                    h += '<button onclick="openEditModal(\'' + b.ref + '\')" class="flex-1 px-3 py-2 text-xs font-semibold rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition">Edit</button>';
+                }
+                h += '<button onclick="markComplete(\'' + b.ref + '\')" class="flex-1 px-3 py-2 text-xs font-semibold rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition">Complete</button>';
+            } else {
+                h += '<button onclick="openEditModal(\'' + b.ref + '\')" class="flex-1 px-3 py-2 text-xs font-semibold rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition">View</button>';
+                if (RBAC.can('booking:edit')) {
+                    h += '<button onclick="openRevertModal(\'' + b.ref + '\')" class="flex-1 px-3 py-2 text-xs font-semibold rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 transition">Revert</button>';
+                }
+            }
+            return h;
+        }
+
+        function renderBookings(filter, searchTerm) {
+            const tbody = document.getElementById('bookingsBody');
+            const cardsEl = document.getElementById('bookingsCards');
+            const emptyEl = document.getElementById('bookingsEmpty');
+            let filtered = bookings;
+            if (filter && filter !== 'all') {
+                filtered = filtered.filter(b => b.status === filter);
+            }
+            if (searchTerm) {
+                const q = searchTerm.toLowerCase();
+                filtered = filtered.filter(b => b.name.toLowerCase().includes(q) || b.ref.toLowerCase().includes(q));
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '';
+                cardsEl.innerHTML = '';
+                emptyEl.classList.remove('hidden');
+                document.getElementById('paginationInfo').textContent = '0 bookings found';
+                updateStats();
+                return;
+            }
+            emptyEl.classList.add('hidden');
+
+            const statusColors = {
+                pending: 'bg-amber-100 text-amber-700',
+                upcoming: 'bg-blue-100 text-blue-700',
+                ongoing: 'bg-green-100 text-green-700',
+                complete: 'bg-emerald-100 text-emerald-700',
+                canceled: 'bg-red-100 text-red-700'
+            };
+            const statusIcons = {
+                pending: 'fa-exclamation-circle',
+                upcoming: 'fa-clock',
+                ongoing: 'fa-car',
+                complete: 'fa-check',
+                canceled: 'fa-times'
+            };
+
+            // Table rows (desktop)
+            tbody.innerHTML = filtered.map(function(b) {
+                const initials = b.name.split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase();
+                const avatarBg = { pending:'bg-amber-100 text-amber-600', upcoming:'bg-blue-100 text-blue-600', ongoing:'bg-green-100 text-green-600', complete:'bg-emerald-100 text-emerald-600', canceled:'bg-red-100 text-red-600' };
+                const amountStyle = b.status === 'canceled' ? 'line-through text-gray-400' : 'text-gray-800';
+                const finalTotal = getFinalTotal(b);
+                const actions = buildActionsHTML(b);
+
+                return '<tr class="hover:bg-gray-50 transition" data-status="' + b.status + '">' +
+                    '<td class="px-6 py-4 font-mono text-sm font-bold text-primary">' + b.ref + '</td>' +
+                    '<td class="px-6 py-4"><div class="flex items-center gap-3"><div class="w-8 h-8 ' + (avatarBg[b.status] || 'bg-gray-100 text-gray-600') + ' rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">' + initials + '</div><div class="min-w-0"><div class="font-medium text-gray-800 text-sm truncate">' + b.name + '</div><div class="text-xs text-gray-500">' + b.phone + '</div></div></div></td>' +
+                    '<td class="px-6 py-4 text-sm text-gray-600">' + b.vehicle + '</td>' +
+                    '<td class="px-6 py-4"><div class="text-sm text-gray-800 whitespace-nowrap">' + formatDate(b.start) + ' ' + formatTime(b.startTime) + '</div><div class="text-xs text-gray-500 whitespace-nowrap">to ' + formatDate(b.end) + ' ' + formatTime(b.endTime) + '</div></td>' +
+                    '<td class="px-6 py-4 text-right font-bold ' + amountStyle + '">RM ' + finalTotal.toLocaleString() + '</td>' +
+                    '<td class="px-6 py-4 text-center"><span class="' + statusColors[b.status] + ' text-xs font-bold px-3 py-1 rounded-full capitalize inline-flex items-center gap-1"><i class="fas ' + statusIcons[b.status] + '"></i>' + b.status + '</span></td>' +
+                    '<td class="px-6 py-4"><div class="flex gap-2 justify-end">' + actions + '</div></td>' +
+                    '</tr>';
+            }).join('');
+
+            // Cards (mobile/tablet)
+            cardsEl.innerHTML = filtered.map(function(b) {
+                const initials = b.name.split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase();
+                const avatarBg = { pending:'bg-amber-100 text-amber-600', upcoming:'bg-blue-100 text-blue-600', ongoing:'bg-green-100 text-green-600', complete:'bg-emerald-100 text-emerald-600', canceled:'bg-red-100 text-red-600' };
+                const badgeBg = { pending:'bg-amber-100 text-amber-700', upcoming:'bg-blue-100 text-blue-700', ongoing:'bg-green-100 text-green-700', complete:'bg-emerald-100 text-emerald-700', canceled:'bg-red-100 text-red-700' };
+                const amountStyle = b.status === 'canceled' ? 'line-through text-gray-400' : 'text-gray-800';
+                const finalTotal = getFinalTotal(b);
+                const actions = buildCardActions(b);
+
+                return '<div class="p-4 space-y-3 hover:bg-gray-50 transition" data-status="' + b.status + '">' +
+                    '<div class="flex justify-between items-start gap-2">' +
+                        '<div class="font-mono text-sm font-bold text-primary break-all">' + b.ref + '</div>' +
+                        '<span class="' + badgeBg[b.status] + ' text-xs font-bold px-3 py-1 rounded-full capitalize whitespace-nowrap flex-shrink-0 inline-flex items-center gap-1"><i class="fas ' + statusIcons[b.status] + '"></i>' + b.status + '</span>' +
+                    '</div>' +
+                    '<div class="flex items-center gap-3">' +
+                        '<div class="w-9 h-9 ' + (avatarBg[b.status] || 'bg-gray-100 text-gray-600') + ' rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">' + initials + '</div>' +
+                        '<div class="min-w-0 flex-1"><div class="font-medium text-gray-800 text-sm truncate">' + b.name + '</div><div class="text-xs text-gray-500 truncate">' + b.phone + '</div></div>' +
+                        '<div class="text-right flex-shrink-0"><div class="text-xs text-gray-400 font-medium">Vehicle</div><div class="text-sm font-medium text-gray-700 truncate max-w-[120px]">' + b.vehicle + '</div></div>' +
+                    '</div>' +
+                    '<div class="grid grid-cols-2 gap-3 text-sm bg-gray-50 rounded-xl px-3 py-2.5">' +
+                        '<div><div class="text-xs text-gray-400"><i class="fas fa-calendar-check mr-1 text-green-500"></i>Pickup</div><div class="font-medium text-gray-800 text-sm">' + formatDate(b.start) + '</div><div class="text-xs text-gray-500">' + formatTime(b.startTime) + '</div></div>' +
+                        '<div><div class="text-xs text-gray-400"><i class="fas fa-flag-checkered mr-1 text-red-500"></i>Return</div><div class="font-medium text-gray-800 text-sm">' + formatDate(b.end) + '</div><div class="text-xs text-gray-500">' + formatTime(b.endTime) + '</div></div>' +
+                    '</div>' +
+                    '<div class="flex justify-between items-center border-t border-gray-100 pt-2">' +
+                        '<span class="text-xs text-gray-400 font-medium">Total</span>' +
+                        '<span class="font-bold ' + amountStyle + '">RM ' + finalTotal.toLocaleString() + '</span>' +
+                    '</div>' +
+                    '<div class="flex gap-2 pt-1">' + actions + '</div>' +
+                    '</div>';
+            }).join('');
+
+            document.getElementById('paginationInfo').textContent = 'Showing 1-' + filtered.length + ' of ' + filtered.length + ' bookings';
+            updateStats();
+        }
+
+        function getFinalTotal(b) {
+            const rate = (b.discount > 0) ? b.discount : b.rate;
+            return (rate * b.days) + (b.extra || 0);
+        }
+
+        function formatDate(dateStr) {
+            const d = new Date(dateStr + 'T00:00:00');
+            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            return months[d.getMonth()] + ' ' + d.getDate();
+        }
+
+        function formatTime(t) {
+            if (!t) return '';
+            const [h, m] = t.split(':').map(Number);
+            const ampm = h < 12 ? 'AM' : 'PM';
+            const hh = h <= 12 ? h : h - 12;
+            return hh + ':' + m.toString().padStart(2,'0') + ' ' + ampm;
+        }
+
+        function updateStats() {
+            const counts = { pending:0, upcoming:0, ongoing:0, complete:0, canceled:0 };
+            bookings.forEach(b => { if (counts[b.status] !== undefined) counts[b.status]++; });
+            document.getElementById('statPending').textContent = counts.pending;
+            document.getElementById('statUpcoming').textContent = counts.upcoming;
+            document.getElementById('statOngoing').textContent = counts.ongoing;
+            document.getElementById('statComplete').textContent = counts.complete;
+            document.getElementById('statCanceled').textContent = counts.canceled;
+        }
+
+        // === FILTERS ===
+        let currentFilter = 'all';
+        function filterBookings(status) {
+            currentFilter = status;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-primary', 'text-white');
+                btn.classList.add('bg-gray-100', 'text-gray-600');
+            });
+            event.target.classList.remove('bg-gray-100', 'text-gray-600');
+            event.target.classList.add('bg-primary', 'text-white');
+            renderBookings(status, document.getElementById('searchInput').value);
+        }
+
+        function searchBookings() {
+            renderBookings(currentFilter, document.getElementById('searchInput').value);
+        }
+
+        // === NEW BOOKING WIZARD ===
+        function openNewBookingModal() {
+            wizardStep = 1;
+            var form = document.getElementById('newBookingModal');
+            form.querySelectorAll('input:not([type="hidden"]), textarea').forEach(function(el) { el.value = ''; });
+            form.querySelectorAll('select').forEach(function(el) { el.selectedIndex = 0; });
+            document.getElementById('newStartDate').value = '';
+            document.getElementById('newEndDate').value = '';
+            document.getElementById('newStartTime').value = '';
+            document.getElementById('newEndTime').value = '';
+            document.getElementById('newDatesDisplay').value = '';
+            document.getElementById('summaryDailyRate').textContent = 'RM 0';
+            document.getElementById('summaryDuration').textContent = '0 days';
+            document.getElementById('summaryTotal').textContent = 'RM 0';
+            wizardData = {};
+            updateWizardUI();
+            form.classList.remove('hidden');
+            form.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeNewBookingModal() {
+            CalendarPicker.close();
+            document.getElementById('newBookingModal').classList.add('hidden');
+            document.getElementById('newBookingModal').classList.remove('flex');
+            document.body.style.overflow = '';
+        }
+
+        function wizardNav(dir) {
+            if (dir === 1) {
+                if (wizardStep === 1) {
+                    if (!document.getElementById('newName').value || !document.getElementById('newPhone').value) {
+                        showToast('Please fill in required fields (Name, Phone)');
+                        return;
+                    }
+                    wizardData.name = document.getElementById('newName').value;
+                    wizardData.phone = document.getElementById('newPhone').value;
+                    wizardData.ic = document.getElementById('newIC').value;
+                    wizardData.email = document.getElementById('newEmail').value;
+                }
+                if (wizardStep === 2) {
+                    if (!document.getElementById('newVehicle').value || !document.getElementById('newStartDate').value || !document.getElementById('newEndDate').value) {
+                        showToast('Please fill in all required rental details');
+                        return;
+                    }
+                    const parts = document.getElementById('newVehicle').value.split('|');
+                    wizardData.vehicle = parts[0];
+                    wizardData.rate = parseInt(parts[1]);
+                    wizardData.start = document.getElementById('newStartDate').value;
+                    wizardData.startTime = document.getElementById('newStartTime').value;
+                    wizardData.end = document.getElementById('newEndDate').value;
+                    wizardData.endTime = document.getElementById('newEndTime').value;
+                    wizardData.status = document.getElementById('newStatus').value;
+                    wizardData.deposit = parseFloat(document.getElementById('newDeposit').value) || 0;
+                    wizardData.notes = document.getElementById('newNotes').value;
+
+                    // Validate return time rules
+                    if (wizardData.start === wizardData.end) {
+                        if (wizardData.endTime < wizardData.startTime) {
+                            showToast('Return time must be on or after pickup time for same-day return');
+                            return;
+                        }
+                    } else if (wizardData.endTime !== wizardData.startTime) {
+                        showToast('Return time must match pickup time when returning on a different day');
+                        return;
+                    }
+
+                    // Validate end > start
+                    const startDT = new Date(wizardData.start + 'T' + wizardData.startTime);
+                    const endDT = new Date(wizardData.end + 'T' + wizardData.endTime);
+                    if (endDT <= startDT) {
+                        showToast('Return date/time must be after pickup date/time');
+                        return;
+                    }
+                    if (endDT - startDT < 86400000) {
+                        showToast('Minimum rental period is 24 hours');
+                        return;
+                    }
+
+                    // Check vehicle availability
+                    const conflict = isVehicleBooked(wizardData.vehicle, wizardData.start + 'T' + wizardData.startTime, wizardData.end + 'T' + wizardData.endTime, null);
+                    if (conflict) {
+                        showToast('Vehicle is booked for those dates (' + conflict.ref + ')');
+                        return;
+                    }
+
+                    // Calculate days
+                    const diffMs = endDT - startDT;
+                    wizardData.days = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+                    wizardData.total = wizardData.rate * wizardData.days;
+                    wizardData.extra = 0;
+                    wizardData.discount = 0;
+
+                    // Populate review
+                    document.getElementById('reviewName').textContent = wizardData.name;
+                    document.getElementById('reviewPhone').textContent = wizardData.phone;
+                    document.getElementById('reviewVehicle').textContent = wizardData.vehicle + ' (RM ' + wizardData.rate + '/day)';
+                    document.getElementById('reviewStart').textContent = formatDate(wizardData.start) + ' ' + formatTime(wizardData.startTime);
+                    document.getElementById('reviewEnd').textContent = formatDate(wizardData.end) + ' ' + formatTime(wizardData.endTime);
+                    document.getElementById('reviewDuration').textContent = wizardData.days + ' day(s)';
+                    const statusLabels = { pending:'<span class="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">Pending</span>', upcoming:'<span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">Upcoming</span>' };
+                    document.getElementById('reviewStatus').innerHTML = statusLabels[wizardData.status] || wizardData.status;
+                    document.getElementById('reviewDeposit').textContent = wizardData.deposit > 0 ? 'RM ' + wizardData.deposit : 'None';
+                    document.getElementById('reviewTotal').textContent = 'RM ' + wizardData.total.toLocaleString();
+                }
+            }
+            wizardStep += dir;
+            if (wizardStep < 1) wizardStep = 1;
+            if (wizardStep > 3) wizardStep = 3;
+            updateWizardUI();
+        }
+
+        function updateWizardUI() {
+            document.getElementById('wizardStep1').classList.toggle('hidden', wizardStep !== 1);
+            document.getElementById('wizardStep2').classList.toggle('hidden', wizardStep !== 2);
+            document.getElementById('wizardStep3').classList.toggle('hidden', wizardStep !== 3);
+            document.getElementById('wizardBack').classList.toggle('hidden', wizardStep === 1);
+            document.getElementById('wizardNext').classList.toggle('hidden', wizardStep === 3);
+            document.getElementById('wizardSubmit').classList.toggle('hidden', wizardStep !== 3);
+            document.getElementById('wizardStepLabel').textContent = 'Step ' + wizardStep + ' of 3 — ' + ['', 'Customer Information', 'Rental Details', 'Review & Confirm'][wizardStep];
+
+            // Progress dots
+            for (let i = 1; i <= 3; i++) {
+                const dot = document.getElementById('step' + i + 'Dot');
+                if (i < wizardStep) { dot.className = 'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white bg-primary'; dot.innerHTML = '<i class="fas fa-check"></i>'; }
+                else if (i === wizardStep) { dot.className = 'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white bg-primary'; dot.textContent = i; }
+                else { dot.className = 'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-gray-400 bg-gray-200'; dot.textContent = i; }
+            }
+            // Progress bars
+            document.getElementById('step1Fill').style.width = (wizardStep > 1 ? '100' : '0') + '%';
+            document.getElementById('step2Fill').style.width = (wizardStep > 2 ? '100' : '0') + '%';
+        }
+
+        function updateNewPriceSummary() {
+            const v = document.getElementById('newVehicle').value;
+            if (!v) return;
+            const rate = parseInt(v.split('|')[1]);
+            const sd = document.getElementById('newStartDate').value;
+            const ed = document.getElementById('newEndDate').value;
+            if (!sd || !ed) return;
+            const sDT = new Date(sd + 'T' + (document.getElementById('newStartTime').value || '10:00'));
+            const eDT = new Date(ed + 'T' + (document.getElementById('newEndTime').value || '10:00'));
+            if (eDT <= sDT) { document.getElementById('summaryDuration').textContent = 'Invalid'; document.getElementById('summaryTotal').textContent = 'RM 0'; return; }
+            const days = Math.max(1, Math.ceil((eDT - sDT) / (1000*60*60*24)));
+            document.getElementById('summaryDailyRate').textContent = 'RM ' + rate;
+            document.getElementById('summaryDuration').textContent = days + ' day(s) × RM ' + rate;
+            document.getElementById('summaryTotal').textContent = 'RM ' + (rate * days).toLocaleString();
+            updateAvailabilityIndicator('newAvailIndicator', 'newVehicle', 'newStartDate', 'newEndDate', 'newStartTime', 'newEndTime', null);
+        }
+
+        function handleNewBookingSubmit(e) {
+            e.preventDefault();
+            const staffName = localStorage.getItem('staffName') || 'Admin User';
+            const today = new Date();
+            const dateStr = today.getFullYear().toString() +
+                (today.getMonth()+1).toString().padStart(2,'0') +
+                today.getDate().toString().padStart(2,'0');
+            const countToday = bookings.filter(b => b.ref.includes(dateStr)).length;
+            const newRef = 'ACR-' + dateStr + '-' + (countToday + 1).toString().padStart(4,'0');
+
+            const newBooking = {
+                ref: newRef,
+                name: wizardData.name,
+                phone: wizardData.phone,
+                ic: wizardData.ic,
+                email: wizardData.email,
+                vehicle: wizardData.vehicle,
+                rate: wizardData.rate,
+                start: wizardData.start,
+                startTime: wizardData.startTime,
+                end: wizardData.end,
+                endTime: wizardData.endTime,
+                days: wizardData.days,
+                total: wizardData.total,
+                deposit: wizardData.deposit,
+                extra: 0,
+                discount: 0,
+                status: wizardData.status,
+                notes: wizardData.notes,
+                createdBy: staffName
+            };
+            bookings.unshift(newBooking);
+            if (!newBooking.history) newBooking.history = [];
+            newBooking.history.push({ action:'created', by:staffName, time:'Just now', detail:'Booking created' });
+            activityLog.unshift({ action:'created', ref:newRef, staff:staffName, detail:newBooking.name + ', ' + newBooking.vehicle, time:'Just now' });
+            syncBookings();
+            closeNewBookingModal();
+            renderBookings(currentFilter, document.getElementById('searchInput').value);
+            showToast('Booking ' + newRef + ' created!');
+        }
+
+        // === EDIT BOOKING ===
+        function openEditModal(ref) {
+            const b = bookings.find(x => x.ref === ref);
+            if (!b) return;
+            currentEditRef = ref;
+            document.getElementById('editRefLabel').textContent = ref;
+            document.getElementById('editName').value = b.name;
+            document.getElementById('editPhone').value = b.phone;
+            document.getElementById('editIC').value = b.ic || '';
+            document.getElementById('editEmail').value = b.email || '';
+            document.getElementById('editVehicle').value = b.vehicle + '|' + b.rate;
+            document.getElementById('editStartDate').value = b.start;
+            document.getElementById('editEndDate').value = b.end;
+            document.getElementById('editStatus').value = b.status;
+            document.getElementById('editDeposit').value = b.deposit || '';
+            document.getElementById('editExtra').value = b.extra || '';
+            document.getElementById('editDiscount').value = b.discount || '';
+            document.getElementById('editNotes').value = b.notes || '';
+            document.getElementById('editStartTime').value = b.startTime || '10:00';
+            document.getElementById('editEndTime').value = b.endTime || '10:00';
+            document.getElementById('editDatesDisplay').value = 'Pickup: ' + b.start + ' ' + formatTime(b.startTime || '10:00') + '  →  Return: ' + b.end + ' ' + formatTime(b.endTime || '10:00');
+            updateEditPriceSummary();
+
+            // Role + status based read-only mode
+            var isCompleteOrCanceled = (b.status === 'complete' || b.status === 'canceled');
+            var readOnly = isCompleteOrCanceled && !RBAC.can('booking:edit');
+            var editFields = ['editName', 'editPhone', 'editIC', 'editEmail', 'editVehicle',
+                'editStartDate', 'editEndDate', 'editStartTime', 'editEndTime',
+                'editStatus', 'editDeposit', 'editExtra', 'editDiscount', 'editNotes'];
+            editFields.forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.disabled = readOnly;
+            });
+            document.getElementById('editSubmitBtn').classList.toggle('hidden', readOnly);
+            document.getElementById('editRevertBtn').classList.toggle('hidden', !(RBAC.can('booking:edit') && isCompleteOrCanceled));
+
+            document.getElementById('editModal').classList.remove('hidden');
+            document.getElementById('editModal').classList.add('flex');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeEditModal() {
+            CalendarPicker.close();
+            document.getElementById('editModal').classList.add('hidden');
+            document.getElementById('editModal').classList.remove('flex');
+            document.body.style.overflow = '';
+            currentEditRef = null;
+        }
+
+        function updateEditPriceSummary() {
+            const v = document.getElementById('editVehicle').value;
+            if (!v) return;
+            const origRate = parseInt(v.split('|')[1]);
+            const sd = document.getElementById('editStartDate').value;
+            const ed = document.getElementById('editEndDate').value;
+            if (!sd || !ed) return;
+            const sDT = new Date(sd + 'T' + (document.getElementById('editStartTime').value || '10:00'));
+            const eDT = new Date(ed + 'T' + (document.getElementById('editEndTime').value || '10:00'));
+            if (eDT <= sDT) { document.getElementById('editDuration').textContent = 'Invalid'; document.getElementById('editTotal').textContent = 'RM 0'; return; }
+            const days = Math.max(1, Math.ceil((eDT - sDT) / (1000*60*60*24)));
+            const disc = parseFloat(document.getElementById('editDiscount').value);
+            const extra = parseFloat(document.getElementById('editExtra').value) || 0;
+            const effectiveRate = (disc > 0 && disc < origRate) ? disc : origRate;
+            const total = (effectiveRate * days) + extra;
+
+            document.getElementById('editOrigRate').textContent = 'RM ' + origRate;
+            document.getElementById('editDuration').textContent = days + ' day(s)';
+
+            if (disc > 0 && disc < origRate) {
+                document.getElementById('editDiscountRow').classList.remove('hidden');
+                document.getElementById('editDiscRate').textContent = 'RM ' + disc;
+            } else {
+                document.getElementById('editDiscountRow').classList.add('hidden');
+            }
+            if (extra > 0) {
+                document.getElementById('editExtraRow').classList.remove('hidden');
+                document.getElementById('editExtraAmt').textContent = 'RM ' + extra;
+            } else {
+                document.getElementById('editExtraRow').classList.add('hidden');
+            }
+            document.getElementById('editTotal').textContent = 'RM ' + total.toLocaleString();
+            updateAvailabilityIndicator('editAvailIndicator', 'editVehicle', 'editStartDate', 'editEndDate', 'editStartTime', 'editEndTime', currentEditRef);
+        }
+
+        function handleEditSubmit(e) {
+            e.preventDefault();
+            const b = bookings.find(x => x.ref === currentEditRef);
+            if (!b) return;
+            const staffName = localStorage.getItem('staffName') || 'Admin User';
+            const oldStatus = b.status;
+            const oldRate = b.rate;
+            const oldStart = b.start;
+            const oldEnd = b.end;
+            const oldDays = b.days;
+            const oldVehicle = b.vehicle;
+            const oldName = b.name;
+            const oldExtra = b.extra || 0;
+            const oldDiscount = b.discount || 0;
+            b.name = document.getElementById('editName').value;
+            b.phone = document.getElementById('editPhone').value;
+            b.ic = document.getElementById('editIC').value;
+            b.email = document.getElementById('editEmail').value;
+            const vParts = document.getElementById('editVehicle').value.split('|');
+            b.vehicle = vParts[0];
+            b.rate = parseInt(vParts[1]);
+            b.start = document.getElementById('editStartDate').value;
+            b.startTime = document.getElementById('editStartTime').value;
+            b.end = document.getElementById('editEndDate').value;
+            b.endTime = document.getElementById('editEndTime').value;
+            b.status = document.getElementById('editStatus').value;
+            b.deposit = parseFloat(document.getElementById('editDeposit').value) || 0;
+            b.extra = parseFloat(document.getElementById('editExtra').value) || 0;
+            b.discount = parseFloat(document.getElementById('editDiscount').value) || 0;
+            b.notes = document.getElementById('editNotes').value;
+
+            // Validate return time rules
+            if (b.start === b.end) {
+                if (b.endTime < b.startTime) {
+                    showToast('Return time must be on or after pickup time for same-day return');
+                    return;
+                }
+            } else if (b.endTime !== b.startTime) {
+                showToast('Return time must match pickup time when returning on a different day');
+                return;
+            }
+
+            const sDT = new Date(b.start + 'T' + b.startTime);
+            const eDT = new Date(b.end + 'T' + b.endTime);
+            if (eDT <= sDT) { showToast('Return date/time must be after pickup date/time'); return; }
+            if (eDT - sDT < 86400000) { showToast('Minimum rental period is 24 hours'); return; }
+            b.days = Math.max(1, Math.ceil((eDT - sDT) / (1000*60*60*24)));
+
+            // Check vehicle availability (exclude self)
+            const conflict = isVehicleBooked(b.vehicle, b.start + 'T' + b.startTime, b.end + 'T' + b.endTime, currentEditRef);
+            if (conflict) {
+                showToast('Vehicle is booked for those dates (' + conflict.ref + ')');
+                return;
+            }
+
+            if (!b.history) b.history = [];
+            if (oldStatus !== b.status) {
+                b.history.push({ action:'status_changed', by:staffName, time:'Just now', detail:oldStatus + ' → ' + b.status });
+                activityLog.unshift({ action:'status_changed', ref:currentEditRef, staff:staffName, detail:'changed to ' + b.status + ', ' + b.name + ', ' + b.vehicle, time:'Just now' });
+            }
+            const changes = [];
+            if (oldName !== b.name) changes.push('name: ' + oldName + ' → ' + b.name);
+            if (oldVehicle !== b.vehicle) changes.push('vehicle: ' + oldVehicle + ' → ' + b.vehicle);
+            if (oldRate !== b.rate) changes.push('rate: RM' + oldRate + ' → RM' + b.rate);
+            if (oldStart !== b.start || oldEnd !== b.end) changes.push('period: ' + formatDate(oldStart) + ' → ' + formatDate(b.start) + ' to ' + formatDate(b.end));
+            if (oldDays !== b.days) changes.push('days: ' + oldDays + ' → ' + b.days);
+            if (oldExtra !== b.extra) changes.push('extra: RM' + oldExtra + ' → RM' + b.extra);
+            if (oldDiscount !== b.discount) changes.push('discount: RM' + oldDiscount + ' → RM' + b.discount);
+            if (changes.length > 0) {
+                b.history.push({ action:'edited', by:staffName, time:'Just now', detail:changes.join(', ') });
+                activityLog.unshift({ action:'edited', ref:currentEditRef, staff:staffName, detail:'Updated ' + b.name + ', ' + b.vehicle, time:'Just now' });
+            } else if (oldStatus === b.status) {
+                activityLog.unshift({ action:'edited', ref:currentEditRef, staff:staffName, detail:'Updated ' + b.name + ', ' + b.vehicle, time:'Just now' });
+            }
+
+            closeEditModal();
+            syncBookings();
+            renderBookings(currentFilter, document.getElementById('searchInput').value);
+            showToast('Booking ' + currentEditRef + ' updated!');
+        }
+
+        // === CANCEL BOOKING ===
+        function openCancelModal(ref) {
+            cancelTargetRef = ref;
+            document.getElementById('cancelRefLabel').textContent = ref;
+            document.getElementById('cancelModal').classList.remove('hidden');
+            document.getElementById('cancelModal').classList.add('flex');
+        }
+        function closeCancelModal() {
+            document.getElementById('cancelModal').classList.add('hidden');
+            document.getElementById('cancelModal').classList.remove('flex');
+            cancelTargetRef = null;
+        }
+        function confirmCancel() {
+            const b = bookings.find(x => x.ref === cancelTargetRef);
+            if (b) {
+                const oldStatus = b.status;
+                b.status = 'canceled';
+                const staffName = localStorage.getItem('staffName') || 'Admin User';
+                if (!b.history) b.history = [];
+                b.history.push({ action:'canceled', by:staffName, time:'Just now', detail:oldStatus + ' → canceled' });
+                activityLog.unshift({ action:'canceled', ref:cancelTargetRef, staff:staffName, detail:b.name + ', ' + b.vehicle, time:'Just now' });
+                syncBookings();
+            }
+            closeCancelModal();
+            renderBookings(currentFilter, document.getElementById('searchInput').value);
+            showToast('Booking ' + cancelTargetRef + ' canceled.');
+        }
+
+        // === MARK COMPLETE ===
+        function markComplete(ref) {
+            const b = bookings.find(x => x.ref === ref);
+            if (b) {
+                const oldStatus = b.status;
+                b.status = 'complete';
+                const staffName = localStorage.getItem('staffName') || 'Admin User';
+                if (!b.history) b.history = [];
+                b.history.push({ action:'status_changed', by:staffName, time:'Just now', detail:oldStatus + ' → complete' });
+                activityLog.unshift({ action:'status_changed', ref:ref, staff:staffName, detail:'changed to complete, ' + b.name + ', ' + b.vehicle, time:'Just now' });
+                syncBookings();
+            }
+            renderBookings(currentFilter, document.getElementById('searchInput').value);
+            showToast('Booking ' + ref + ' marked as complete!');
+        }
+
+        // === REVERT STATUS ===
+        var revertTargetRef = '';
+        function openRevertModal(ref) {
+            revertTargetRef = ref;
+            const b = bookings.find(x => x.ref === ref);
+            if (!b) return;
+            document.getElementById('revertRefLabel').textContent = ref + ' — ' + b.name;
+            document.getElementById('revertCurrentStatus').textContent = b.status;
+            var targets = ['pending', 'upcoming', 'ongoing'].filter(function(s) { return s !== b.status; });
+            var container = document.getElementById('revertOptions');
+            container.innerHTML = targets.map(function(s) {
+                var colors = { pending:'bg-amber-100 text-amber-700 hover:bg-amber-200', upcoming:'bg-blue-100 text-blue-700 hover:bg-blue-200', ongoing:'bg-green-100 text-green-700 hover:bg-green-200' };
+                return '<button onclick="revertToStatus(\'' + ref + '\',\'' + s + '\')" class="px-4 py-2 rounded-lg font-medium text-sm ' + (colors[s] || '') + ' transition">' + s.charAt(0).toUpperCase() + s.slice(1) + '</button>';
+            }).join('');
+            document.getElementById('revertModal').classList.remove('hidden');
+            document.getElementById('revertModal').classList.add('flex');
+        }
+        function openRevertModalFromEdit() {
+            closeEditModal();
+            openRevertModal(currentEditRef);
+        }
+        function closeRevertModal() {
+            document.getElementById('revertModal').classList.add('hidden');
+            document.getElementById('revertModal').classList.remove('flex');
+            revertTargetRef = '';
+        }
+        function revertToStatus(ref, newStatus) {
+            const b = bookings.find(x => x.ref === ref);
+            if (!b) return;
+            const oldStatus = b.status;
+            b.status = newStatus;
+            const staffName = localStorage.getItem('staffName') || 'Admin User';
+            if (!b.history) b.history = [];
+            b.history.push({ action:'status_changed', by:staffName, time:'Just now', detail:oldStatus + ' → ' + newStatus + ' (reverted)' });
+            activityLog.unshift({ action:'status_changed', ref:ref, staff:staffName, detail:'reverted to ' + newStatus + ', ' + b.name + ', ' + b.vehicle, time:'Just now' });
+            syncBookings();
+            closeRevertModal();
+            renderBookings(currentFilter, document.getElementById('searchInput').value);
+            showToast('Booking ' + ref + ' reverted to ' + newStatus + '.');
+        }
+
+        // === ACTIVITY LOG MODAL ===
+        function openActivityLog() {
+            const logIcons = { created:'fa-plus text-green-500', edited:'fa-edit text-blue-500', status_changed:'fa-exchange-alt text-amber-500', canceled:'fa-times text-red-500' };
+            const logBg = { created:'bg-green-100', edited:'bg-blue-100', status_changed:'bg-amber-100', canceled:'bg-red-100' };
+            const logLabels = { created:'created', edited:'edited', status_changed:'changed status', canceled:'canceled' };
+
+            document.getElementById('activityLogContent').innerHTML = activityLog.map(a =>
+                '<div class="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 hover:bg-gray-50 rounded-xl transition">' +
+                    '<div class="w-7 h-7 sm:w-8 sm:h-8 ' + (logBg[a.action] || 'bg-gray-100') + ' rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fas ' + (logIcons[a.action] || 'fa-circle text-gray-400') + ' text-xs"></i></div>' +
+                    '<div class="flex-1 min-w-0">' +
+                        '<div class="text-xs sm:text-sm text-gray-800 break-words"><span class="font-semibold">' + a.staff + '</span> ' + (logLabels[a.action] || a.action) + ' <span class="font-mono text-primary">' + a.ref + '</span></div>' +
+                        '<div class="text-xs text-gray-400 mt-0.5 break-words">' + a.time + ' — ' + a.detail + '</div>' +
+                    '</div>' +
+                '</div>'
+            ).join('');
+
+            document.getElementById('activityLogModal').classList.remove('hidden');
+            document.getElementById('activityLogModal').classList.add('flex');
+        }
+        function closeActivityLog() {
+            document.getElementById('activityLogModal').classList.add('hidden');
+            document.getElementById('activityLogModal').classList.remove('flex');
+        }
+
+        // === BOOKING HISTORY MODAL ===
+        function openBookingHistory(ref) {
+            const b = bookings.find(x => x.ref === ref);
+            if (!b || !b.history || b.history.length === 0) {
+                showToast('No history available for this booking');
+                return;
+            }
+            document.getElementById('historyBookingInfo').textContent = ref + ' — ' + b.name + ' — ' + b.vehicle;
+            const dotColors = { created:'dot-green', edited:'dot-blue', status_changed:'dot-amber', canceled:'dot-red' };
+            const actionLabels = { created:'Booking created', edited:'Edited', status_changed:'Status changed', canceled:'Booking canceled' };
+
+            let html = '<div class="history-timeline">';
+            b.history.slice().reverse().forEach(h => {
+                html += '<div class="history-item">' +
+                    '<div class="history-dot ' + (dotColors[h.action] || '') + '"></div>' +
+                    '<div class="text-xs text-gray-400 mb-0.5">' + h.time + '</div>' +
+                    '<div class="text-sm font-medium text-gray-800">' + (actionLabels[h.action] || h.action) + '</div>' +
+                    '<div class="text-xs text-gray-500 mt-0.5">' + h.detail + '</div>' +
+                    '<div class="text-xs text-gray-400 mt-0.5">by ' + h.by + '</div>' +
+                '</div>';
+            });
+            html += '</div>';
+
+            document.getElementById('bookingHistoryContent').innerHTML = html;
+            document.getElementById('bookingHistoryModal').classList.remove('hidden');
+            document.getElementById('bookingHistoryModal').classList.add('flex');
+        }
+        function closeBookingHistory() {
+            document.getElementById('bookingHistoryModal').classList.add('hidden');
+            document.getElementById('bookingHistoryModal').classList.remove('flex');
+        }
+
+        // === TOAST ===
+        function showToast(message) {
+            const toast = document.getElementById('successToast');
+            document.getElementById('toastMessage').textContent = message;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => { toast.classList.add('translate-y-20', 'opacity-0'); }, 3000);
+        }
+
+        // === MODAL CLOSE ON BG ===
+        document.getElementById('newBookingModal').addEventListener('click', function(e) { if (e.target === this) closeNewBookingModal(); });
+        document.getElementById('editModal').addEventListener('click', function(e) { if (e.target === this) closeEditModal(); });
+        document.getElementById('cancelModal').addEventListener('click', function(e) { if (e.target === this) closeCancelModal(); });
+        document.getElementById('revertModal').addEventListener('click', function(e) { if (e.target === this) closeRevertModal(); });
+        document.getElementById('activityLogModal').addEventListener('click', function(e) { if (e.target === this) closeActivityLog(); });
+        document.getElementById('bookingHistoryModal').addEventListener('click', function(e) { if (e.target === this) closeBookingHistory(); });
+        document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { CalendarPicker.close(); closeNewBookingModal(); closeEditModal(); closeCancelModal(); closeRevertModal(); closeActivityLog(); closeBookingHistory(); } });
+        // === SHARED CALENDAR PICKER ===
+        CalendarPicker.init({
+            triggers: [
+                {
+                    selector: '[data-cal-open="new"]',
+                    mode: 'new',
+                    fields: { display: 'newDatesDisplay', startDate: 'newStartDate', endDate: 'newEndDate', startTime: 'newStartTime', endTime: 'newEndTime' },
+                    getVehicle: function() { var v = document.getElementById('newVehicle').value; return v ? v.split('|')[0] : ''; },
+                    getExcludeRef: function() { return null; },
+                    onConfirm: function(d) { updateNewPriceSummary(); }
+                },
+                {
+                    selector: '[data-cal-open="edit"]',
+                    mode: 'edit',
+                    fields: { display: 'editDatesDisplay', startDate: 'editStartDate', endDate: 'editEndDate', startTime: 'editStartTime', endTime: 'editEndTime' },
+                    getVehicle: function() { var v = document.getElementById('editVehicle').value; return v ? v.split('|')[0] : ''; },
+                    getExcludeRef: function() { return window.currentEditRef || null; },
+                    onConfirm: function(d) { updateEditPriceSummary(); }
+                }
+            ]
+        });
+
+        // === SYNC BOOKINGS TO LOCALSTORAGE ===
+        function syncBookings() {
+            localStorage.setItem('anbelBookings', JSON.stringify(bookings));
+        }
+
+        // === AVAILABILITY CHECK ===
+        function isVehicleBooked(vehicle, newStart, newEnd, excludeRef) {
+            var allBookings = JSON.parse(localStorage.getItem('anbelBookings') || '[]');
+            var ns = new Date(newStart).getTime();
+            var ne = new Date(newEnd).getTime();
+            for (var i = 0; i < allBookings.length; i++) {
+                var b = allBookings[i];
+                if (b.vehicle !== vehicle) continue;
+                if (b.status === 'canceled') continue;
+                if (excludeRef && b.ref === excludeRef) continue;
+                var bs = new Date(b.start + 'T' + (b.startTime || '10:00')).getTime();
+                var be = new Date(b.end + 'T' + (b.endTime || '10:00')).getTime();
+                if (ns < be && bs < ne) return b;
+            }
+            return null;
+        }
+
+        function updateAvailabilityIndicator(containerId, vehicle, startInputId, endInputId, startTimeId, endTimeId, excludeRef) {
+            var container = document.getElementById(containerId);
+            if (!container) return;
+            var vehicleVal = document.getElementById(vehicle).value;
+            var sd = document.getElementById(startInputId).value;
+            var ed = document.getElementById(endInputId).value;
+            if (!vehicleVal || !sd || !ed) { container.classList.add('hidden'); container.innerHTML = ''; return; }
+            var vName = vehicleVal.split('|')[0];
+            var st = document.getElementById(startTimeId).value || '10:00';
+            var et = document.getElementById(endTimeId).value || '10:00';
+            var conflict = isVehicleBooked(vName, sd + 'T' + st, ed + 'T' + et, excludeRef);
+            if (conflict) {
+                container.classList.remove('hidden');
+                container.innerHTML = '<div class="flex items-center gap-2 text-red-600 text-sm mt-2 bg-red-50 px-3 py-2 rounded-lg"><i class="fas fa-exclamation-circle"></i><span>Vehicle booked (' + conflict.ref + '): ' + conflict.start + ' → ' + conflict.end + '</span></div>';
+            } else {
+                container.classList.remove('hidden');
+                container.innerHTML = '<div class="flex items-center gap-2 text-green-600 text-sm mt-2 bg-green-50 px-3 py-2 rounded-lg"><i class="fas fa-check-circle"></i><span>Vehicle available for selected dates</span></div>';
+            }
+        }
+
+        // === INIT ===
+        RBAC.init();
+        syncBookings();
+        renderBookings('all');
+
+        // === URL PARAM AUTO-OPEN (Feature C: Dashboard → Booking) ===
+        const urlParams = new URLSearchParams(window.location.search);
+        const autoRef = urlParams.get('ref');
+        if (autoRef) {
+            document.getElementById('searchInput').value = autoRef;
+            renderBookings('all', autoRef);
+            setTimeout(function() {
+                openEditModal(autoRef);
+                showToast('Showing booking ' + autoRef);
+            }, 300);
+            window.history.replaceState({}, '', 'bookings.html');
+        }
+    </script>
+    <script src="js/rbac.js"></script>
+    <script src="js/sidebar.js"></script>
+</body>
+</html>

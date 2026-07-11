@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anbel Car Rental - Site Settings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { primary: '#1e40af', 'primary-dark': '#1e3a8a', accent: '#f59e0b', sidebar: '#0f172a', 'sidebar-hover': '#1e293b' } } }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 font-sans">
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed left-0 top-0 h-full bg-sidebar text-white z-40 transition-all duration-300 w-[85vw] max-w-xs lg:w-64">
+        <div class="flex items-center justify-between px-6 py-5 border-b border-gray-700/50">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-car-side text-accent text-2xl"></i>
+                <span class="text-lg font-bold sidebar-text" id="sidebarBrand">Anbel Car Rental</span>
+            </div>
+            <button data-sidebar-toggle class="text-gray-400 hover:text-white lg:hidden"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <div class="px-6 py-4 border-b border-gray-700/50">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center"><i class="fas fa-user text-white text-sm"></i></div>
+                <div class="sidebar-text">
+                    <div class="font-semibold text-sm" data-user-name>Admin User</div>
+                    <div class="text-xs text-gray-400" data-user-role>Administrator</div>
+                </div>
+            </div>
+        </div>
+        <nav id="sidebarNav" class="py-4"></nav>
+        <div class="absolute bottom-0 w-full border-t border-gray-700/50 p-4">
+            <a href="login.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-red-500/20 hover:text-red-400 transition rounded-xl">
+                <i class="fas fa-sign-out-alt w-5"></i><span class="sidebar-text">Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden" data-sidebar-toggle></div>
+
+    <!-- Main Content -->
+    <div class="lg:ml-64 min-h-screen">
+        <header class="bg-white shadow-sm sticky top-0 z-20">
+            <div class="flex items-center justify-between px-6 py-4">
+                <div class="flex items-center gap-4">
+                    <button data-sidebar-toggle class="lg:hidden text-gray-600 hover:text-primary"><i class="fas fa-bars text-xl"></i></button>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-800">Site Settings</h1>
+                        <p class="text-sm text-gray-500">Manage all website content from here</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div id="roleBadge"></div>
+                </div>
+            </div>
+        </header>
+
+        <main class="p-6">
+            <div id="successToast" class="fixed bottom-6 right-6 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+                <i class="fas fa-check-circle text-xl"></i>
+                <span class="font-medium" id="toastMessage">Settings saved successfully!</span>
+            </div>
+
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex items-start gap-3">
+                <i class="fas fa-shield-alt text-amber-500 text-xl mt-0.5"></i>
+                <div>
+                    <h4 class="font-bold text-amber-800 text-sm">Admin Only Page</h4>
+                    <p class="text-amber-700 text-sm">This page is restricted to Admin users only. Staff and Supervisor accounts are redirected to the dashboard.</p>
+                </div>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="flex gap-1 mb-6 border-b border-gray-200 pb-0 overflow-x-auto">
+                <button onclick="switchTab('content')" id="tabContent" class="tab-btn px-4 py-3 font-medium text-sm rounded-t-xl border-b-2 border-primary text-primary bg-white transition whitespace-nowrap">
+                    <i class="fas fa-edit mr-1"></i>Content
+                </button>
+                <button onclick="switchTab('fleet')" id="tabFleet" class="tab-btn px-4 py-3 font-medium text-sm rounded-t-xl border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition whitespace-nowrap">
+                    <i class="fas fa-car mr-1"></i>Fleet
+                </button>
+                <button onclick="switchTab('users')" id="tabUsers" class="tab-btn px-4 py-3 font-medium text-sm rounded-t-xl border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition whitespace-nowrap">
+                    <i class="fas fa-users-cog mr-1"></i>Users
+                </button>
+            </div>
+
+            <!-- ========== CONTENT SETTINGS ========== -->
+            <div id="panelContent">
+                <form onsubmit="handleSaveContent(event)" class="space-y-6">
+
+                    <!-- Hero Section -->
+                    <div class="bg-white rounded-2xl shadow-sm p-6">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center"><i class="fas fa-home text-blue-500"></i></div>
+                            <div><h3 class="font-bold text-gray-800">Hero Section</h3><p class="text-sm text-gray-500">Main welcome area on the homepage</p></div>
+                        </div>
+                        <div class="space-y-4">
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">Badge Text</label><input type="text" id="setBadge" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"></div>
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">Main Heading (Line 1)</label><input type="text" id="setHeroTitle1" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"></div>
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">Main Heading (Line 2)</label><input type="text" id="setHeroTitle2" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"></div>
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">Subtext</label><textarea rows="2" id="setHeroSub" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary resize-none"></textarea></div>
+                        </div>
+                    </div>
+
+                    <!-- Stats Bar -->
+                    <div class="bg-white rounded-2xl shadow-sm p-6">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center"><i class="fas fa-chart-bar text-green-500"></i></div>
+                            <div><h3 class="font-bold text-gray-800">Stats Bar</h3><p class="text-sm text-gray-500">Numbers shown below the hero section</p></div>
+                        </div>
+                        <div class="grid md:grid-cols-4 gap-4">
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">Stat 1 Value</label><input type="text" id="setStat1Val" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"></div>
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">Stat 1 Label</label><input type="text" id="setStat1Label" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"></div>
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">Stat 2 Value</label><input type="text" id="setStat2Val" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"></div>
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">Stat 2 Label</label><input type="text" id="setStat2Label" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"></div>
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">Stat 3 Value</label><input type="text" id="setStat3Val" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"></div>
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">Stat 3 Label</label><input type="text" id="setStat3Label" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"></div>
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">Stat 4 Value</label><input type="text" id="setStat4Val" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"></div>
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">Stat 4 Label</label><input type="text" id="setStat4Label" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"></div>
+                        </div>
+                    </div>
+
+                    <!-- About Section -->
+                    <div class="bg-white rounded-2xl shadow-sm p-6">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center"><i class="fas fa-info-circle text-purple-500"></i></div>
+                            <div><h3 class="font-bold text-gray-800">About Section</h3><p class="text-sm text-gray-500">"Why Choose Anbel Car Rental?" content</p></div>
+                        </div>
+                        <div class="space-y-4">
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">Section Heading</label><input type="text" id="setAboutHeading" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"></div>
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">Description Paragraph</label><textarea rows="3" id="setAboutDesc" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary resize-none"></textarea></div>
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">About Image URL</label><input type="url" id="setAboutImage" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary" placeholder="https://..."></div>
+                            <div class="grid md:grid-cols-2 gap-4" id="aboutFeaturesGrid"></div>
+                        </div>
+                    </div>
+
+                    <!-- WhatsApp Contact -->
+                    <div class="bg-white rounded-2xl shadow-sm p-6">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center"><i class="fab fa-whatsapp text-green-500 text-lg"></i></div>
+                            <div><h3 class="font-bold text-gray-800">WhatsApp Contact</h3><p class="text-sm text-gray-500">WhatsApp number for booking requests</p></div>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="bg-gray-100 px-4 py-2.5 rounded-xl text-sm text-gray-600 border border-gray-200">+60</span>
+                            <input type="tel" id="setWhatsApp" class="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary">
+                        </div>
+                    </div>
+
+                    <!-- Contact Section -->
+                    <div class="bg-white rounded-2xl shadow-sm p-6">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-10 h-10 bg-accent/20 rounded-xl flex items-center justify-center"><i class="fas fa-phone text-accent"></i></div>
+                            <div><h3 class="font-bold text-gray-800">Contact Section</h3><p class="text-sm text-gray-500">Phone, address, and contact cards</p></div>
+                        </div>
+                        <div class="space-y-4">
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">Phone Number</label><input type="tel" id="setPhone" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary" placeholder="+601-2345-6789"></div>
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">Office Address</label><input type="text" id="setAddress" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"></div>
+                        </div>
+                    </div>
+
+                    <!-- Terms & Conditions -->
+                    <div class="bg-white rounded-2xl shadow-sm p-6">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center"><i class="fas fa-file-contract text-purple-500"></i></div>
+                            <div><h3 class="font-bold text-gray-800">Terms & Conditions</h3><p class="text-sm text-gray-500">Rental terms shown to customers</p></div>
+                        </div>
+                        <div><textarea rows="10" id="setTerms" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary resize-none leading-relaxed"></textarea></div>
+                    </div>
+
+                    <!-- Site Identity -->
+                    <div class="bg-white rounded-2xl shadow-sm p-6">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-10 h-10 bg-accent/20 rounded-xl flex items-center justify-center"><i class="fas fa-palette text-accent"></i></div>
+                            <div><h3 class="font-bold text-gray-800">Site Identity</h3><p class="text-sm text-gray-500">Business name and branding</p></div>
+                        </div>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">Business Name</label><input type="text" id="setBizName" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"></div>
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">SSM Registration</label><input type="text" id="setSSM" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary" placeholder="202603164986 (LA0090677-P)"></div>
+                            <div class="md:col-span-2"><label class="block text-sm font-semibold text-gray-700 mb-1">Footer Tagline</label><input type="text" id="setFooterTag" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"></div>
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">Copyright Text</label><input type="text" id="setCopyright" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"></div>
+                        </div>
+                    </div>
+
+                    <!-- Save Button -->
+                    <div class="flex justify-end">
+                        <button type="submit" class="bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-xl font-medium transition flex items-center gap-2 shadow-sm">
+                            <i class="fas fa-save"></i> Save All Settings
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ========== FLEET MANAGEMENT ========== -->
+            <div id="panelFleet" class="hidden">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg">Fleet Management</h3>
+                        <p class="text-sm text-gray-500">Add, edit, or remove vehicles from your fleet</p>
+                    </div>
+                    <button onclick="openFleetModal()" class="bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-xl font-medium transition flex items-center gap-2 text-sm">
+                        <i class="fas fa-plus"></i> Add Vehicle
+                    </button>
+                </div>
+                <div id="fleetList" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+
+            <!-- ========== USER MANAGEMENT ========== -->
+            <div id="panelUsers" class="hidden">
+                <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center"><i class="fas fa-user-plus text-blue-500"></i></div>
+                        <div><h3 class="font-bold text-gray-800">Add New Staff Account</h3><p class="text-sm text-gray-500">Create a new staff member login</p></div>
+                    </div>
+                    <form onsubmit="handleAddUser(event)" class="space-y-4">
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">Full Name *</label><input type="text" required placeholder="Enter staff name" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"></div>
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">Username *</label><input type="text" required placeholder="Login username" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"></div>
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">Email *</label><input type="email" required placeholder="staff@anbelcarrental.com" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"></div>
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">Role *</label><select required class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary text-gray-600"><option value="">-- Select Role --</option><option value="staff">Staff</option><option value="supervisor">Supervisor</option><option value="admin">Admin</option></select></div>
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">Password *</label><input type="password" required placeholder="Minimum 8 characters" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"></div>
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">Confirm Password *</label><input type="password" required placeholder="Re-enter password" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"></div>
+                        </div>
+                        <div class="flex justify-end"><button type="submit" class="bg-primary hover:bg-primary-dark text-white px-6 py-2.5 rounded-xl font-medium transition flex items-center gap-2 text-sm"><i class="fas fa-user-plus"></i> Create Account</button></div>
+                    </form>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b flex items-center justify-between">
+                        <div><h3 class="font-bold text-gray-800">Existing User Accounts</h3><p class="text-sm text-gray-500">Manage staff and admin accounts</p></div>
+                        <span class="bg-gray-100 text-gray-600 text-sm font-medium px-3 py-1 rounded-full">4 users</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50"><tr>
+                                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">User</th>
+                                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Role</th>
+                                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">2FA</th>
+                                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                            </tr></thead>
+                            <tbody class="divide-y divide-gray-100">
+                                <tr class="hover:bg-gray-50"><td class="px-6 py-4"><div class="flex items-center gap-3"><div class="w-9 h-9 bg-primary rounded-full flex items-center justify-center text-white text-sm font-bold">AU</div><div><div class="font-medium text-gray-800 text-sm">Admin User</div><div class="text-xs text-gray-500">admin@anbelcarrental.com</div></div></div></td><td class="px-6 py-4"><span class="bg-purple-100 text-purple-700 text-xs font-bold px-2 py-1 rounded-full">Admin</span></td><td class="px-6 py-4"><span class="text-green-600 text-sm"><i class="fas fa-check-circle mr-1"></i>Active</span></td><td class="px-6 py-4"><span class="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full">Active</span></td><td class="px-6 py-4"><div class="flex gap-2"><button class="text-gray-400 hover:text-blue-500 transition" title="Edit"><i class="fas fa-edit"></i></button><button class="text-gray-400 hover:text-amber-500 transition" title="Reset Password"><i class="fas fa-key"></i></button></div></td></tr>
+                                <tr class="hover:bg-gray-50"><td class="px-6 py-4"><div class="flex items-center gap-3"><div class="w-9 h-9 bg-indigo-500 rounded-full flex items-center justify-center text-white text-sm font-bold">SA</div><div><div class="font-medium text-gray-800 text-sm">Supervisor Aisyah</div><div class="text-xs text-gray-500">aisyah@anbelcarrental.com</div></div></div></td><td class="px-6 py-4"><span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-1 rounded-full">Supervisor</span></td><td class="px-6 py-4"><span class="text-green-600 text-sm"><i class="fas fa-check-circle mr-1"></i>Active</span></td><td class="px-6 py-4"><span class="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full">Active</span></td><td class="px-6 py-4"><div class="flex gap-2"><button class="text-gray-400 hover:text-blue-500 transition" title="Edit"><i class="fas fa-edit"></i></button><button class="text-gray-400 hover:text-amber-500 transition" title="Reset Password"><i class="fas fa-key"></i></button></div></td></tr>
+                                <tr class="hover:bg-gray-50"><td class="px-6 py-4"><div class="flex items-center gap-3"><div class="w-9 h-9 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold">AH</div><div><div class="font-medium text-gray-800 text-sm">Staff Ahmad</div><div class="text-xs text-gray-500">ahmad@anbelcarrental.com</div></div></div></td><td class="px-6 py-4"><span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-full">Staff</span></td><td class="px-6 py-4"><span class="text-green-600 text-sm"><i class="fas fa-check-circle mr-1"></i>Active</span></td><td class="px-6 py-4"><span class="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full">Active</span></td><td class="px-6 py-4"><div class="flex gap-2"><button class="text-gray-400 hover:text-blue-500 transition" title="Edit"><i class="fas fa-edit"></i></button><button class="text-gray-400 hover:text-amber-500 transition" title="Reset Password"><i class="fas fa-key"></i></button><button onclick="deleteUser('Staff Ahmad')" class="text-gray-400 hover:text-red-500 transition" title="Delete"><i class="fas fa-trash"></i></button></div></td></tr>
+                                <tr class="hover:bg-gray-50"><td class="px-6 py-4"><div class="flex items-center gap-3"><div class="w-9 h-9 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">SN</div><div><div class="font-medium text-gray-800 text-sm">Staff Noraini</div><div class="text-xs text-gray-500">noraini@anbelcarrental.com</div></div></div></td><td class="px-6 py-4"><span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-full">Staff</span></td><td class="px-6 py-4"><span class="text-amber-600 text-sm"><i class="fas fa-exclamation-circle mr-1"></i>Pending</span></td><td class="px-6 py-4"><span class="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-1 rounded-full">Inactive</span></td><td class="px-6 py-4"><div class="flex gap-2"><button class="text-gray-400 hover:text-blue-500 transition" title="Edit"><i class="fas fa-edit"></i></button><button class="text-gray-400 hover:text-amber-500 transition" title="Reset Password"><i class="fas fa-key"></i></button><button onclick="deleteUser('Staff Noraini')" class="text-gray-400 hover:text-red-500 transition" title="Delete"><i class="fas fa-trash"></i></button></div></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm p-6 mt-6">
+                    <h3 class="font-bold text-gray-800 mb-4"><i class="fas fa-info-circle text-primary mr-2"></i>Role Permissions</h3>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="border border-purple-200 rounded-xl p-4">
+                            <h4 class="font-bold text-purple-700 mb-3"><i class="fas fa-crown mr-1"></i> Admin</h4>
+                            <ul class="space-y-2 text-sm text-gray-600">
+                                <li class="flex items-center gap-2"><i class="fas fa-check text-green-500 text-xs"></i> Full access to all pages</li>
+                                <li class="flex items-center gap-2"><i class="fas fa-check text-green-500 text-xs"></i> Manage staff accounts</li>
+                                <li class="flex items-center gap-2"><i class="fas fa-check text-green-500 text-xs"></i> Manage site settings</li>
+                                <li class="flex items-center gap-2"><i class="fas fa-check text-green-500 text-xs"></i> View revenue & earnings</li>
+                                <li class="flex items-center gap-2"><i class="fas fa-check text-green-500 text-xs"></i> Edit any booking (any status)</li>
+                                <li class="flex items-center gap-2"><i class="fas fa-check text-green-500 text-xs"></i> Revert completed/canceled</li>
+                            </ul>
+                        </div>
+                        <div class="border border-indigo-200 rounded-xl p-4">
+                            <h4 class="font-bold text-indigo-700 mb-3"><i class="fas fa-user-tie mr-1"></i> Supervisor</h4>
+                            <ul class="space-y-2 text-sm text-gray-600">
+                                <li class="flex items-center gap-2"><i class="fas fa-check text-green-500 text-xs"></i> Edit any booking (any status)</li>
+                                <li class="flex items-center gap-2"><i class="fas fa-check text-green-500 text-xs"></i> Revert completed/canceled</li>
+                                <li class="flex items-center gap-2"><i class="fas fa-check text-green-500 text-xs"></i> Cancel bookings</li>
+                                <li class="flex items-center gap-2"><i class="fas fa-check text-green-500 text-xs"></i> Mark bookings complete</li>
+                                <li class="flex items-center gap-2"><i class="fas fa-times text-red-500 text-xs"></i> <span class="text-red-500">Cannot view revenue/earnings</span></li>
+                                <li class="flex items-center gap-2"><i class="fas fa-times text-red-500 text-xs"></i> <span class="text-red-500">Cannot manage users</span></li>
+                                <li class="flex items-center gap-2"><i class="fas fa-times text-red-500 text-xs"></i> <span class="text-red-500">Cannot access site settings</span></li>
+                            </ul>
+                        </div>
+                        <div class="border border-blue-200 rounded-xl p-4">
+                            <h4 class="font-bold text-blue-700 mb-3"><i class="fas fa-user mr-1"></i> Staff</h4>
+                            <ul class="space-y-2 text-sm text-gray-600">
+                                <li class="flex items-center gap-2"><i class="fas fa-check text-green-500 text-xs"></i> Create bookings</li>
+                                <li class="flex items-center gap-2"><i class="fas fa-check text-green-500 text-xs"></i> Edit pending/upcoming/ongoing</li>
+                                <li class="flex items-center gap-2"><i class="fas fa-check text-green-500 text-xs"></i> Cancel & mark complete</li>
+                                <li class="flex items-center gap-2"><i class="fas fa-times text-red-500 text-xs"></i> <span class="text-red-500">Cannot edit complete/canceled</span></li>
+                                <li class="flex items-center gap-2"><i class="fas fa-times text-red-500 text-xs"></i> <span class="text-red-500">Cannot view revenue/earnings</span></li>
+                                <li class="flex items-center gap-2"><i class="fas fa-times text-red-500 text-xs"></i> <span class="text-red-500">Cannot manage users</span></li>
+                                <li class="flex items-center gap-2"><i class="fas fa-times text-red-500 text-xs"></i> <span class="text-red-500">Cannot access site settings</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Fleet Vehicle Modal -->
+    <div id="fleetModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center rounded-t-2xl z-10">
+                <h3 class="text-xl font-bold text-gray-800" id="fleetModalTitle">Add Vehicle</h3>
+                <button onclick="closeFleetModal()" class="text-gray-400 hover:text-red-500 text-xl transition"><i class="fas fa-times"></i></button>
+            </div>
+            <form class="p-6 space-y-4" onsubmit="handleFleetSave(event)">
+                <input type="hidden" id="fleetEditIndex" value="-1">
+                <div><label class="block text-sm font-semibold text-gray-700 mb-1">Vehicle Name *</label><input type="text" id="fleetName" required placeholder="e.g. Toyota Camry 2024" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"></div>
+                <div><label class="block text-sm font-semibold text-gray-700 mb-1">Image URL *</label><input type="url" id="fleetImage" required placeholder="https://..." class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-sm font-semibold text-gray-700 mb-1">Daily Rate (RM) *</label><input type="number" id="fleetPrice" required min="0" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"></div>
+                    <div><label class="block text-sm font-semibold text-gray-700 mb-1">Category *</label><select id="fleetCategory" required class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary text-gray-600"><option value="Sedan">Sedan</option><option value="SUV">SUV</option><option value="Sports">Sports</option><option value="MPV">MPV</option></select></div>
+                    <div><label class="block text-sm font-semibold text-gray-700 mb-1">Seats *</label><input type="number" id="fleetSeats" required min="1" max="9" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"></div>
+                    <div><label class="block text-sm font-semibold text-gray-700 mb-1">Transmission</label><select id="fleetTransmission" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary text-gray-600"><option value="Automatic">Automatic</option><option value="Manual">Manual</option></select></div>
+                    <div><label class="block text-sm font-semibold text-gray-700 mb-1">Fuel Type</label><select id="fleetFuel" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary text-gray-600"><option value="Petrol">Petrol</option><option value="Diesel">Diesel</option><option value="Electric">Electric</option><option value="Hybrid">Hybrid</option></select></div>
+                    <div><label class="block text-sm font-semibold text-gray-700 mb-1">Rating (0-5)</label><input type="number" id="fleetRating" min="0" max="5" step="0.1" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary"></div>
+                </div>
+                <div><label class="block text-sm font-semibold text-gray-700 mb-1">Description</label><textarea rows="2" id="fleetDesc" placeholder="Brief description of the vehicle" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary resize-none"></textarea></div>
+                <div><label class="block text-sm font-semibold text-gray-700 mb-1">Status</label><select id="fleetStatus" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary text-gray-600"><option value="Available">Available</option><option value="Booked">Booked</option><option value="Maintenance">Maintenance</option></select></div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeFleetModal()" class="flex-1 px-6 py-3 border border-gray-200 text-gray-600 rounded-xl font-medium hover:bg-gray-50 transition">Cancel</button>
+                    <button type="submit" class="flex-1 px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-xl font-medium transition flex items-center justify-center gap-2"><i class="fas fa-save"></i> Save Vehicle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 text-center">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fas fa-trash text-red-500 text-3xl"></i></div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2" id="deleteTitle">Delete?</h3>
+            <p class="text-gray-500 text-sm mb-6" id="deleteMsg">Are you sure?</p>
+            <div class="flex gap-3">
+                <button onclick="closeDeleteModal()" class="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl font-medium hover:bg-gray-50 transition">Cancel</button>
+                <button onclick="confirmDelete()" class="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === DEFAULTS ===
+        const DEFAULTS = {
+            badge: 'SSM Registered · Malaysia\'s Trusted Car Rental',
+            heroTitle1: 'Premium Car Rental',
+            heroTitle2: 'Made Simple',
+            heroSub: 'Quality vehicles, unbeatable prices, and hassle-free rentals. Book your dream car today.',
+            stat1Val: '50', stat1Label: 'Vehicles Available',
+            stat2Val: '1200', stat2Label: 'Happy Customers',
+            stat3Val: '4.9', stat3Label: 'Customer Rating',
+            stat4Val: '24/7', stat4Label: 'Support Available',
+            aboutHeading: 'Why Choose Anbel Car Rental?',
+            aboutDesc: 'Anbel Car Rental is a freshly established, SSM-registered car rental company serving individuals, families, business travellers, and tourists across Malaysia. We combine a brand-new, meticulously maintained fleet with seamless WhatsApp booking and transparent pricing — no hidden fees, no surprises.',
+            aboutImage: 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=700&h=500&fit=crop',
+
+            aboutFeatures: [
+                { icon: 'fa-car', title: 'Easy & Transparent Booking', desc: 'Browse vehicles, check real-time availability, select dates, and view estimated prices before contacting us via WhatsApp.' },
+                { icon: 'fab fa-whatsapp', title: 'Fast WhatsApp Booking', desc: 'Book your preferred vehicle quickly through WhatsApp. Our friendly team confirms your booking and assists every step.' },
+                { icon: 'fa-headset', title: '24/7 Customer Support', desc: 'Whether you have a question or need assistance during your rental, our support team is available 24 hours a day.' },
+                { icon: 'fa-shield-alt', title: 'Safe & Well-Maintained Vehicles', desc: 'Every vehicle is regularly inspected, professionally maintained, and comes with valid insurance and up-to-date road tax.' },
+                { icon: 'fa-tags', title: 'Affordable & Transparent Pricing', desc: 'Enjoy competitive daily rental rates with clear pricing and no hidden charges — complete peace of mind.' },
+                { icon: 'fa-star', title: 'Reliable & Customer-Focused Service', desc: 'We are committed to providing a smooth, reliable, and stress-free rental experience from booking to vehicle return.' }
+            ],
+            whatsapp: '123456789',
+            phone: '+601-2345-6789',
+            address: '123 Rental Street, Kuala Lumpur, Malaysia',
+            terms: '1. Eligibility: Renters must be at least 21 years old and hold a valid driving license.\n\n2. Booking: All bookings are confirmed via WhatsApp after staff verification. A deposit may be required.\n\n3. Payment: Full payment is due before vehicle handover. Cash or bank transfer accepted.\n\n4. Fuel Policy: Vehicles must be returned with the same fuel level as at pickup.\n\n5. Damage: Renters are responsible for any damage not covered by insurance.\n\n6. Late Returns: A penalty fee of RM50/hour applies for late returns beyond the agreed time.\n\n7. Cancellation: Free cancellation up to 24 hours before the rental start time.\n\n8. Usage: Vehicles may not be used for illegal activities, racing, or off-road driving.',
+            bizName: 'Anbel Car Rental',
+            ssm: '202603164986 (LA0090677-P)',
+            footerTag: 'Premium car rental service with the best prices and well-maintained vehicles.',
+            copyright: '© 2026 Anbel Car Rental Enterprise. All rights reserved.',
+            fleet: [
+                { name:'Toyota Camry 2024', image:'https://images.unsplash.com/photo-1549317661-bd32c8ce0abb?w=600&h=400&fit=crop', price:150, category:'Sedan', seats:5, transmission:'Automatic', fuel:'Petrol', rating:4.5, desc:'Experience the perfect blend of luxury and performance with the Toyota Camry 2024. Ideal for business trips and family outings.', status:'Available' },
+                { name:'Honda CR-V 2024', image:'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=600&h=400&fit=crop', price:220, category:'SUV', seats:7, transmission:'Automatic', fuel:'Petrol', rating:5.0, desc:'The Honda CR-V 2024 combines spaciousness with modern technology. Perfect for family trips.', status:'Available' },
+                { name:'BMW M4 Competition', image:'https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=600&h=400&fit=crop', price:450, category:'Sports', seats:4, transmission:'Automatic', fuel:'Petrol', rating:4.9, desc:'Unleash the power of the BMW M4 Competition. 503 horsepower and precision handling.', status:'Booked' },
+                { name:'Toyota Alphard 2023', image:'https://images.unsplash.com/photo-1549317661-bd32c8ce0abb?w=600&h=400&fit=crop', price:350, category:'MPV', seats:7, transmission:'Automatic', fuel:'Petrol', rating:4.0, desc:'Travel in ultimate comfort with the Toyota Alphard. Luxury MPV with premium seating.', status:'Available' },
+                { name:'Mercedes C300 2024', image:'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&h=400&fit=crop', price:280, category:'Sedan', seats:5, transmission:'Automatic', fuel:'Petrol', rating:4.7, desc:'The Mercedes-Benz C300 embodies elegance and innovation. Luxurious interior and smooth ride.', status:'Available' },
+                { name:'Mazda CX-5 2023', image:'https://images.unsplash.com/photo-1606611013016-969c19ba27c9?w=600&h=400&fit=crop', price:180, category:'SUV', seats:5, transmission:'Automatic', fuel:'Petrol', rating:4.2, desc:'Sporty driving feel with premium build quality.', status:'Maintenance' }
+            ]
+        };
+
+        // === LOAD ===
+        function loadSettings() {
+            try { return JSON.parse(localStorage.getItem('anbelSettings')) || null; } catch { return null; }
+        }
+        function getS(key) { const s = loadSettings(); return s && s[key] !== undefined ? s[key] : DEFAULTS[key]; }
+
+        function populateForm() {
+            document.getElementById('setBadge').value = getS('badge');
+            document.getElementById('setHeroTitle1').value = getS('heroTitle1');
+            document.getElementById('setHeroTitle2').value = getS('heroTitle2');
+            document.getElementById('setHeroSub').value = getS('heroSub');
+            document.getElementById('setStat1Val').value = getS('stat1Val');
+            document.getElementById('setStat1Label').value = getS('stat1Label');
+            document.getElementById('setStat2Val').value = getS('stat2Val');
+            document.getElementById('setStat2Label').value = getS('stat2Label');
+            document.getElementById('setStat3Val').value = getS('stat3Val');
+            document.getElementById('setStat3Label').value = getS('stat3Label');
+            document.getElementById('setStat4Val').value = getS('stat4Val');
+            document.getElementById('setStat4Label').value = getS('stat4Label');
+            document.getElementById('setAboutHeading').value = getS('aboutHeading');
+            document.getElementById('setAboutDesc').value = getS('aboutDesc');
+            document.getElementById('setAboutImage').value = getS('aboutImage');
+            document.getElementById('setWhatsApp').value = getS('whatsapp');
+            document.getElementById('setPhone').value = getS('phone');
+            document.getElementById('setAddress').value = getS('address');
+            document.getElementById('setTerms').value = getS('terms');
+            document.getElementById('bizName') && (document.getElementById('bizName').value = getS('bizName'));
+            document.getElementById('setBizName').value = getS('bizName');
+            document.getElementById('setSSM').value = getS('ssm');
+            document.getElementById('setFooterTag').value = getS('footerTag');
+            document.getElementById('setCopyright').value = getS('copyright');
+
+            const features = getS('aboutFeatures');
+            const grid = document.getElementById('aboutFeaturesGrid');
+            grid.innerHTML = '';
+            features.forEach((f, i) => {
+                grid.innerHTML += '<div class="bg-gray-50 rounded-xl p-3"><label class="block text-xs font-semibold text-gray-500 mb-1">Feature ' + (i+1) + ' Title</label><input type="text" value="' + escHtml(f.title) + '" class="feat-title w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-primary mb-2" data-i="' + i + '"><label class="block text-xs font-semibold text-gray-500 mb-1">Description</label><input type="text" value="' + escHtml(f.desc) + '" class="feat-desc w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-primary" data-i="' + i + '"></div>';
+            });
+        }
+
+        function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+        // === SAVE CONTENT ===
+        function handleSaveContent(e) {
+            e.preventDefault();
+            const features = getS('aboutFeatures');
+            document.querySelectorAll('.feat-title').forEach(el => { features[parseInt(el.dataset.i)].title = el.value; });
+            document.querySelectorAll('.feat-desc').forEach(el => { features[parseInt(el.dataset.i)].desc = el.value; });
+
+            const data = {
+                badge: document.getElementById('setBadge').value,
+                heroTitle1: document.getElementById('setHeroTitle1').value,
+                heroTitle2: document.getElementById('setHeroTitle2').value,
+                heroSub: document.getElementById('setHeroSub').value,
+                stat1Val: document.getElementById('setStat1Val').value,
+                stat1Label: document.getElementById('setStat1Label').value,
+                stat2Val: document.getElementById('setStat2Val').value,
+                stat2Label: document.getElementById('setStat2Label').value,
+                stat3Val: document.getElementById('setStat3Val').value,
+                stat3Label: document.getElementById('setStat3Label').value,
+                stat4Val: document.getElementById('setStat4Val').value,
+                stat4Label: document.getElementById('setStat4Label').value,
+                aboutHeading: document.getElementById('setAboutHeading').value,
+                aboutDesc: document.getElementById('setAboutDesc').value,
+                aboutImage: document.getElementById('setAboutImage').value,
+                aboutFeatures: features,
+                whatsapp: document.getElementById('setWhatsApp').value,
+                phone: document.getElementById('setPhone').value,
+                address: document.getElementById('setAddress').value,
+                terms: document.getElementById('setTerms').value,
+                bizName: document.getElementById('setBizName').value,
+                ssm: document.getElementById('setSSM').value,
+                footerTag: document.getElementById('setFooterTag').value,
+                copyright: document.getElementById('setCopyright').value,
+                fleet: getS('fleet')
+            };
+            localStorage.setItem('anbelSettings', JSON.stringify(data));
+            showToast('Settings saved successfully!');
+        }
+
+        // === FLEET ===
+        function renderFleetList() {
+            const fleet = getS('fleet');
+            const container = document.getElementById('fleetList');
+            if (fleet.length === 0) { container.innerHTML = '<div class="col-span-full text-center py-12 text-gray-400"><i class="fas fa-car text-4xl mb-3"></i><p>No vehicles yet. Click "Add Vehicle" to get started.</p></div>'; return; }
+            container.innerHTML = fleet.map((car, i) => {
+                const statusColors = { Available:'bg-green-100 text-green-700', Booked:'bg-blue-100 text-blue-700', Maintenance:'bg-amber-100 text-amber-700' };
+                return '<div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition">' +
+                    '<img src="' + car.image + '" alt="' + escHtml(car.name) + '" class="w-full h-40 object-cover" loading="lazy" onerror="this.src=\'https://via.placeholder.com/400x200?text=No+Image\'">' +
+                    '<div class="p-4">' +
+                    '<div class="flex items-start justify-between mb-2"><h4 class="font-bold text-gray-800 text-sm">' + escHtml(car.name) + '</h4><span class="' + (statusColors[car.status]||'bg-gray-100 text-gray-600') + ' text-xs font-bold px-2 py-0.5 rounded-full">' + car.status + '</span></div>' +
+                    '<div class="text-xs text-gray-500 space-y-1 mb-3"><span>' + car.category + '</span> · <span>' + car.seats + ' Seats</span> · <span>' + car.transmission + '</span><div class="font-bold text-primary">RM ' + car.price + '/day</div></div>' +
+                    '<div class="flex gap-2"><button onclick="openFleetModal(' + i + ')" class="flex-1 bg-gray-100 hover:bg-blue-100 text-gray-600 hover:text-blue-600 px-3 py-2 rounded-lg text-xs font-medium transition"><i class="fas fa-edit mr-1"></i>Edit</button>' +
+                    '<button onclick="deleteFleet(' + i + ')" class="bg-gray-100 hover:bg-red-100 text-gray-600 hover:text-red-600 px-3 py-2 rounded-lg text-xs font-medium transition"><i class="fas fa-trash"></i></button></div>' +
+                    '</div></div>';
+            }).join('');
+        }
+
+        let deleteTarget = null;
+
+        function openFleetModal(index) {
+            const fleet = getS('fleet');
+            document.getElementById('fleetEditIndex').value = index !== undefined ? index : -1;
+            document.getElementById('fleetModalTitle').textContent = index !== undefined ? 'Edit Vehicle' : 'Add Vehicle';
+            if (index !== undefined && fleet[index]) {
+                const c = fleet[index];
+                document.getElementById('fleetName').value = c.name;
+                document.getElementById('fleetImage').value = c.image;
+                document.getElementById('fleetPrice').value = c.price;
+                document.getElementById('fleetCategory').value = c.category;
+                document.getElementById('fleetSeats').value = c.seats;
+                document.getElementById('fleetTransmission').value = c.transmission;
+                document.getElementById('fleetFuel').value = c.fuel;
+                document.getElementById('fleetRating').value = c.rating || '';
+                document.getElementById('fleetDesc').value = c.desc || '';
+                document.getElementById('fleetStatus').value = c.status;
+            } else {
+                ['fleetName','fleetImage','fleetDesc'].forEach(id => document.getElementById(id).value = '');
+                document.getElementById('fleetPrice').value = '';
+                document.getElementById('fleetSeats').value = 5;
+                document.getElementById('fleetRating').value = '';
+                document.getElementById('fleetCategory').value = 'Sedan';
+                document.getElementById('fleetTransmission').value = 'Automatic';
+                document.getElementById('fleetFuel').value = 'Petrol';
+                document.getElementById('fleetStatus').value = 'Available';
+            }
+            document.getElementById('fleetModal').classList.remove('hidden');
+            document.getElementById('fleetModal').classList.add('flex');
+        }
+        function closeFleetModal() {
+            document.getElementById('fleetModal').classList.add('hidden');
+            document.getElementById('fleetModal').classList.remove('flex');
+        }
+
+        function handleFleetSave(e) {
+            e.preventDefault();
+            const fleet = getS('fleet');
+            const idx = parseInt(document.getElementById('fleetEditIndex').value);
+            const car = {
+                name: document.getElementById('fleetName').value,
+                image: document.getElementById('fleetImage').value,
+                price: parseInt(document.getElementById('fleetPrice').value),
+                category: document.getElementById('fleetCategory').value,
+                seats: parseInt(document.getElementById('fleetSeats').value),
+                transmission: document.getElementById('fleetTransmission').value,
+                fuel: document.getElementById('fleetFuel').value,
+                rating: parseFloat(document.getElementById('fleetRating').value) || 0,
+                desc: document.getElementById('fleetDesc').value,
+                status: document.getElementById('fleetStatus').value
+            };
+            if (idx >= 0) { fleet[idx] = car; } else { fleet.push(car); }
+            const s = loadSettings() || {};
+            s.fleet = fleet;
+            localStorage.setItem('anbelSettings', JSON.stringify(s));
+            closeFleetModal();
+            renderFleetList();
+            showToast(idx >= 0 ? 'Vehicle updated!' : 'Vehicle added!');
+        }
+
+        function deleteFleet(index) {
+            deleteTarget = 'fleet_' + index;
+            document.getElementById('deleteTitle').textContent = 'Delete Vehicle?';
+            document.getElementById('deleteMsg').textContent = 'Remove "' + getS('fleet')[index].name + '" from your fleet?';
+            document.getElementById('deleteModal').classList.remove('hidden');
+            document.getElementById('deleteModal').classList.add('flex');
+        }
+        function deleteUser(name) {
+            deleteTarget = 'user_' + name;
+            document.getElementById('deleteTitle').textContent = 'Delete User?';
+            document.getElementById('deleteMsg').textContent = 'Delete account for "' + name + '"? This cannot be undone.';
+            document.getElementById('deleteModal').classList.remove('hidden');
+            document.getElementById('deleteModal').classList.add('flex');
+        }
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.add('hidden');
+            document.getElementById('deleteModal').classList.remove('flex');
+        }
+        function confirmDelete() {
+            if (deleteTarget && deleteTarget.startsWith('fleet_')) {
+                const idx = parseInt(deleteTarget.split('_')[1]);
+                const fleet = getS('fleet');
+                fleet.splice(idx, 1);
+                const s = loadSettings() || {};
+                s.fleet = fleet;
+                localStorage.setItem('anbelSettings', JSON.stringify(s));
+                renderFleetList();
+                showToast('Vehicle removed.');
+            } else {
+                showToast('User deleted.');
+            }
+            closeDeleteModal();
+        }
+
+        // === USERS ===
+        function handleAddUser(e) {
+            e.preventDefault();
+            showToast('Staff account created!');
+            e.target.reset();
+        }
+
+        // === TABS ===
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('border-primary', 'text-primary', 'bg-white');
+                btn.classList.add('border-transparent', 'text-gray-500');
+            });
+            ['Content', 'Fleet', 'Users'].forEach(t => document.getElementById('panel' + t).classList.add('hidden'));
+            const activeTab = document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+            activeTab.classList.add('border-primary', 'text-primary', 'bg-white');
+            activeTab.classList.remove('border-transparent', 'text-gray-500');
+            document.getElementById('panel' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.remove('hidden');
+        }
+
+        // Role-based access control
+        RBAC.checkPageAccess();
+        // Hide User Management tab for non-admin
+        if (!RBAC.can('user:manage')) {
+            var tabUsers = document.getElementById('tabUsers');
+            if (tabUsers) tabUsers.style.display = 'none';
+        }
+
+        // === TOAST ===
+        function showToast(msg) {
+            const t = document.getElementById('successToast');
+            document.getElementById('toastMessage').textContent = msg;
+            t.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 3000);
+        }
+
+        // === MODAL CLOSE ON BG ===
+        document.getElementById('fleetModal').addEventListener('click', function(e) { if (e.target === this) closeFleetModal(); });
+        document.getElementById('deleteModal').addEventListener('click', function(e) { if (e.target === this) closeDeleteModal(); });
+        document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { closeFleetModal(); closeDeleteModal(); } });
+
+        // === INIT ===
+        RBAC.init();
+        populateForm();
+        renderFleetList();
+    </script>
+    <script src="js/rbac.js"></script>
+    <script src="js/sidebar.js"></script>
+</body>
+</html>

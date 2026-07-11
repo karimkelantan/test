@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anbel Car Rental - Staff Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e40af',
+                        'primary-dark': '#1e3a8a',
+                        accent: '#f59e0b',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .login-bg {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%);
+        }
+        .glass-card {
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+        .input-group { position: relative; }
+        .input-group .toggle-pass {
+            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+            cursor: pointer; color: #9ca3af; transition: color 0.2s;
+        }
+        .input-group .toggle-pass:hover { color: #1e40af; }
+        .floating-shapes div {
+            position: absolute; border-radius: 50%; background: rgba(255,255,255,0.05);
+            animation: float 20s infinite ease-in-out;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            33% { transform: translateY(-30px) rotate(120deg); }
+            66% { transform: translateY(20px) rotate(240deg); }
+        }
+        .otp-input:focus { border-color: #1e40af; box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1); }
+    </style>
+</head>
+<body class="login-bg min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+
+    <!-- Floating Background Shapes -->
+    <div class="floating-shapes inset-0 pointer-events-none">
+        <div class="w-72 h-72 -top-20 -left-20" style="animation-delay: 0s;"></div>
+        <div class="w-96 h-96 -bottom-32 -right-32" style="animation-delay: 5s;"></div>
+        <div class="w-48 h-48 top-1/3 right-1/4" style="animation-delay: 10s;"></div>
+        <div class="w-64 h-64 bottom-1/4 left-1/3" style="animation-delay: 15s;"></div>
+    </div>
+
+    <div class="w-full max-w-md relative z-10">
+
+        <!-- Logo -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-white rounded-2xl shadow-lg mb-4">
+                <i class="fas fa-car-side text-primary text-3xl"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-white">Anbel Car Rental</h1>
+            <p class="text-blue-200 text-sm mt-1">Staff & Admin Portal</p>
+        </div>
+
+        <!-- Login Card -->
+        <div class="glass-card rounded-2xl shadow-2xl p-8">
+
+            <!-- Security Badge -->
+            <div class="flex items-center justify-center gap-2 mb-6">
+                <i class="fas fa-shield-alt text-green-500"></i>
+                <span class="text-sm text-gray-500 font-medium">256-bit SSL Encrypted</span>
+            </div>
+
+            <form id="loginForm" class="space-y-5" onsubmit="handleLogin(event)">
+
+                <!-- Username Field -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-user mr-1 text-gray-400"></i> Username
+                    </label>
+                    <input type="text" id="username" placeholder="Enter your username" required
+                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition text-gray-800"
+                           autocomplete="username">
+                </div>
+
+                <!-- Password Field -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-lock mr-1 text-gray-400"></i> Password
+                    </label>
+                    <div class="input-group">
+                        <input type="password" id="password" placeholder="Enter your password" required
+                               class="w-full px-4 py-3 pr-12 border-2 border-gray-200 rounded-xl focus:border-primary focus:outline-none transition text-gray-800"
+                               autocomplete="current-password">
+                        <span class="toggle-pass" onclick="togglePassword()">
+                            <i class="fas fa-eye" id="eyeIcon"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- 2FA Code Field -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-mobile-alt mr-1 text-gray-400"></i> 2FA Authenticator Code
+                    </label>
+                    <div class="flex gap-2 justify-center">
+                        <input type="text" maxlength="1" class="otp-input w-12 h-14 text-center text-xl font-bold border-2 border-gray-200 rounded-xl focus:outline-none transition text-gray-800" oninput="handleOTP(this, 0)" onkeydown="handleOTPKeydown(event, 0)">
+                        <input type="text" maxlength="1" class="otp-input w-12 h-14 text-center text-xl font-bold border-2 border-gray-200 rounded-xl focus:outline-none transition text-gray-800" oninput="handleOTP(this, 1)" onkeydown="handleOTPKeydown(event, 1)">
+                        <input type="text" maxlength="1" class="otp-input w-12 h-14 text-center text-xl font-bold border-2 border-gray-200 rounded-xl focus:outline-none transition text-gray-800" oninput="handleOTP(this, 2)" onkeydown="handleOTPKeydown(event, 2)">
+                        <span class="text-gray-300 text-2xl font-light self-center">-</span>
+                        <input type="text" maxlength="1" class="otp-input w-12 h-14 text-center text-xl font-bold border-2 border-gray-200 rounded-xl focus:outline-none transition text-gray-800" oninput="handleOTP(this, 3)" onkeydown="handleOTPKeydown(event, 3)">
+                        <input type="text" maxlength="1" class="otp-input w-12 h-14 text-center text-xl font-bold border-2 border-gray-200 rounded-xl focus:outline-none transition text-gray-800" oninput="handleOTP(this, 4)" onkeydown="handleOTPKeydown(event, 4)">
+                        <input type="text" maxlength="1" class="otp-input w-12 h-14 text-center text-xl font-bold border-2 border-gray-200 rounded-xl focus:outline-none transition text-gray-800" oninput="handleOTP(this, 5)" onkeydown="handleOTPKeydown(event, 5)">
+                    </div>
+                    <p class="text-xs text-gray-400 text-center mt-3">
+                        <i class="fas fa-info-circle mr-1"></i> Enter the 6-digit code from your Authenticator app
+                    </p>
+                </div>
+
+                <!-- Remember & Forgot -->
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
+                        <span class="text-sm text-gray-600">Remember me</span>
+                    </label>
+                    <a href="#" class="text-sm text-primary hover:text-primary-dark font-medium transition">Forgot password?</a>
+                </div>
+
+                <!-- Login Button -->
+                <button type="submit" id="loginBtn"
+                        class="w-full bg-primary hover:bg-primary-dark text-white py-3.5 rounded-xl font-bold text-lg transition transform hover:scale-[1.02] shadow-lg flex items-center justify-center gap-2">
+                    <i class="fas fa-sign-in-alt"></i> Secure Login
+                </button>
+
+                <!-- Error Message (Hidden by Default) -->
+                <div id="errorMsg" class="hidden bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    <span id="errorText">Invalid credentials. Please try again.</span>
+                </div>
+            </form>
+        </div>
+
+        <!-- Back to Site -->
+        <div class="text-center mt-6">
+            <a href="index.html" class="text-blue-200 hover:text-white transition text-sm">
+                <i class="fas fa-arrow-left mr-1"></i> Back to Customer Site
+            </a>
+        </div>
+
+        <!-- Security Footer -->
+        <div class="text-center mt-4">
+            <div class="flex items-center justify-center gap-4 text-blue-300/50 text-xs">
+                <span><i class="fas fa-lock mr-1"></i> Secure Login</span>
+                <span><i class="fas fa-fingerprint mr-1"></i> 2FA Required</span>
+                <span><i class="fas fa-database mr-1"></i> PDO Prepared</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle password visibility
+        function togglePassword() {
+            const pw = document.getElementById('password');
+            const icon = document.getElementById('eyeIcon');
+            if (pw.type === 'password') {
+                pw.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                pw.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        // OTP input handling
+        function handleOTP(input, index) {
+            input.value = input.value.replace(/[^0-9]/g, '');
+            if (input.value && index < 5) {
+                document.querySelectorAll('.otp-input')[index + 1].focus();
+            }
+        }
+
+        function handleOTPKeydown(e, index) {
+            if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                document.querySelectorAll('.otp-input')[index - 1].focus();
+            }
+        }
+
+        // Form submission
+        function handleLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            const errorMsg = document.getElementById('errorMsg');
+
+            // Collect OTP
+            let otp = '';
+            document.querySelectorAll('.otp-input').forEach(input => otp += input.value);
+
+            if (otp.length < 6) {
+                errorMsg.classList.remove('hidden');
+                document.getElementById('errorText').textContent = 'Please enter the complete 6-digit 2FA code.';
+                return;
+            }
+
+            // Show loading
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Authenticating...';
+            btn.disabled = true;
+            errorMsg.classList.add('hidden');
+
+            // Simulate authentication
+            setTimeout(() => {
+                const username = document.getElementById('username').value;
+                const nameMap = { 'admin': 'Admin User', 'staff': 'Staff User', 'supervisor': 'Supervisor User' };
+                const roleMap = { 'admin': 'admin', 'staff': 'staff', 'supervisor': 'supervisor' };
+                const staffName = nameMap[username.toLowerCase()] || username;
+                const staffRole = roleMap[username.toLowerCase()] || '';
+                localStorage.setItem('staffName', staffName);
+                localStorage.setItem('staffRole', staffRole);
+
+                if (staffRole) {
+                    window.location.href = 'dashboard.html';
+                } else {
+                    errorMsg.classList.remove('hidden');
+                    document.getElementById('errorText').textContent = 'Invalid credentials. Please try again.';
+                    btn.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i> Secure Login';
+                    btn.disabled = false;
+                }
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

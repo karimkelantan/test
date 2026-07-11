@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anbel Car Rental - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e40af',
+                        'primary-dark': '#1e3a8a',
+                        accent: '#f59e0b',
+                        sidebar: '#0f172a',
+                        'sidebar-hover': '#1e293b',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 font-sans">
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed left-0 top-0 h-full bg-sidebar text-white z-40 transition-all duration-300 w-[85vw] max-w-xs lg:w-64">
+        <!-- Logo -->
+        <div class="flex items-center justify-between px-6 py-5 border-b border-gray-700/50">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-car-side text-accent text-2xl"></i>
+                <span class="text-lg font-bold sidebar-text">Anbel Car Rental</span>
+            </div>
+            <button data-sidebar-toggle class="text-gray-400 hover:text-white lg:hidden">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <!-- User Info -->
+        <div class="px-6 py-4 border-b border-gray-700/50">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                    <i class="fas fa-user text-white text-sm"></i>
+                </div>
+                <div class="sidebar-text">
+                    <div class="font-semibold text-sm" data-user-name>Admin User</div>
+                    <div class="text-xs text-gray-400" data-user-role>Administrator</div>
+                </div>
+            </div>
+        </div>
+
+        <nav id="sidebarNav" class="py-4"></nav>
+
+        <!-- Logout -->
+        <div class="absolute bottom-0 w-full border-t border-gray-700/50 p-4">
+            <a href="login.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-red-500/20 hover:text-red-400 transition rounded-xl">
+                <i class="fas fa-sign-out-alt w-5"></i>
+                <span class="sidebar-text">Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden" data-sidebar-toggle></div>
+
+    <!-- Main Content -->
+    <div class="lg:ml-64 min-h-screen">
+
+        <!-- Top Bar -->
+        <header class="bg-white shadow-sm sticky top-0 z-20">
+            <div class="flex items-center justify-between px-6 py-4">
+                <div class="flex items-center gap-4">
+                    <button data-sidebar-toggle class="lg:hidden text-gray-600 hover:text-primary">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-800">Dashboard</h1>
+                        <p class="text-sm text-gray-500">Welcome back, <span id="welcomeName">Admin</span>. Here's your overview.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div id="roleBadge"></div>
+                    <!-- Notifications -->
+                    <div class="relative">
+                        <button class="text-gray-500 hover:text-primary relative">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
+                        </button>
+                    </div>
+                    <!-- Date -->
+                    <div class="hidden md:flex items-center gap-2 text-sm text-gray-500 bg-gray-50 px-4 py-2 rounded-lg">
+                        <i class="fas fa-calendar-day"></i>
+                        <span id="currentDate">July 11, 2026</span>
+                    </div>
+                    <!-- Profile -->
+                    <div class="flex items-center gap-3 cursor-pointer hover:bg-gray-50 px-3 py-2 rounded-lg transition">
+                        <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-bold" data-user-initial>A</div>
+                        <span class="hidden md:inline text-sm font-medium text-gray-700" data-user-name>Admin</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <main class="p-6">
+
+            <!-- Status Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+
+                <!-- Today's Revenue -->
+                <div id="todayRevenue" class="bg-white rounded-2xl shadow-sm p-6 border-l-4 border-green-500">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500 font-medium">Today's Revenue</p>
+                            <p class="text-2xl font-bold text-gray-800 mt-1">RM 1,250</p>
+                            <p class="text-xs text-green-500 mt-2"><i class="fas fa-arrow-up mr-1"></i>+12% from yesterday</p>
+                        </div>
+                        <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-money-bill-wave text-green-500 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monthly Revenue -->
+                <div id="monthlyRevenue" class="bg-white rounded-2xl shadow-sm p-6 border-l-4 border-primary">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500 font-medium">Monthly Revenue</p>
+                            <p class="text-2xl font-bold text-gray-800 mt-1">RM 38,450</p>
+                            <p class="text-xs text-green-500 mt-2"><i class="fas fa-arrow-up mr-1"></i>+8% from last month</p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-chart-line text-primary text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quarterly Revenue -->
+                <div id="quarterlyRevenue" class="bg-white rounded-2xl shadow-sm p-6 border-l-4 border-accent">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500 font-medium">Quarterly Revenue</p>
+                            <p class="text-2xl font-bold text-gray-800 mt-1">RM 112,300</p>
+                            <p class="text-xs text-green-500 mt-2"><i class="fas fa-arrow-up mr-1"></i>+15% from last quarter</p>
+                        </div>
+                        <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-coins text-accent text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total Earnings -->
+                <div id="totalEarnings" class="bg-white rounded-2xl shadow-sm p-6 border-l-4 border-purple-500">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500 font-medium">Total Earnings</p>
+                            <p class="text-2xl font-bold text-gray-800 mt-1">RM 485,600</p>
+                            <p class="text-xs text-gray-400 mt-2">Since inception</p>
+                        </div>
+                        <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-piggy-bank text-purple-500 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Booking Status Cards -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+                <!-- Pending -->
+                <div class="bg-white rounded-xl shadow-sm p-5 text-center hover:shadow-md transition">
+                    <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-exclamation-circle text-amber-500 text-xl"></i>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-800">3</div>
+                    <div class="text-sm text-gray-500 mt-1">Pending</div>
+                    <div class="mt-2">
+                        <span class="inline-block bg-amber-100 text-amber-600 text-xs font-bold px-3 py-1 rounded-full">Awaiting Payment</span>
+                    </div>
+                </div>
+
+                <!-- Upcoming -->
+                <div class="bg-white rounded-xl shadow-sm p-5 text-center hover:shadow-md transition">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-clock text-blue-500 text-xl"></i>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-800">8</div>
+                    <div class="text-sm text-gray-500 mt-1">Upcoming</div>
+                    <div class="mt-2">
+                        <span class="inline-block bg-blue-100 text-blue-600 text-xs font-bold px-3 py-1 rounded-full">Active</span>
+                    </div>
+                </div>
+
+                <!-- Ongoing -->
+                <div class="bg-white rounded-xl shadow-sm p-5 text-center hover:shadow-md transition">
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-car text-green-500 text-xl"></i>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-800">5</div>
+                    <div class="text-sm text-gray-500 mt-1">Ongoing</div>
+                    <div class="mt-2">
+                        <span class="inline-block bg-green-100 text-green-600 text-xs font-bold px-3 py-1 rounded-full">In Progress</span>
+                    </div>
+                </div>
+
+                <!-- Complete -->
+                <div class="bg-white rounded-xl shadow-sm p-5 text-center hover:shadow-md transition">
+                    <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-check-circle text-emerald-500 text-xl"></i>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-800">142</div>
+                    <div class="text-sm text-gray-500 mt-1">Completed</div>
+                    <div class="mt-2">
+                        <span class="inline-block bg-emerald-100 text-emerald-600 text-xs font-bold px-3 py-1 rounded-full">All Time</span>
+                    </div>
+                </div>
+
+                <!-- Canceled -->
+                <div class="bg-white rounded-xl shadow-sm p-5 text-center hover:shadow-md transition">
+                    <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-times-circle text-red-500 text-xl"></i>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-800">12</div>
+                    <div class="text-sm text-gray-500 mt-1">Canceled</div>
+                    <div class="mt-2">
+                        <span class="inline-block bg-red-100 text-red-600 text-xs font-bold px-3 py-1 rounded-full">Canceled</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Required Panel -->
+            <div class="bg-white rounded-2xl shadow-sm p-6 mb-8">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-gray-800 text-lg">
+                        <i class="fas fa-bell text-amber-500 mr-2"></i>Action Required
+                    </h3>
+                    <span id="actionCount" class="bg-red-100 text-red-600 text-xs font-bold px-3 py-1 rounded-full">3 items</span>
+                </div>
+                <div id="actionList" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <!-- Rendered dynamically by renderActionRequired() -->
+                </div>
+                <div id="actionEmpty" class="hidden text-center py-8">
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-check-circle text-green-500 text-3xl"></i>
+                    </div>
+                    <p class="text-gray-500 font-medium">All caught up!</p>
+                    <p class="text-gray-400 text-sm">No action required right now.</p>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="grid lg:grid-cols-3 gap-6 mb-8">
+
+                <!-- Revenue Chart -->
+                <div id="revenueChartCard" class="lg:col-span-2 bg-white rounded-2xl shadow-sm p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="font-bold text-gray-800 text-lg">Revenue Overview</h3>
+                        <select class="text-sm border border-gray-200 rounded-lg px-3 py-1.5 text-gray-600 focus:outline-none focus:border-primary">
+                            <option>This Year</option>
+                            <option>Last Year</option>
+                            <option>All Time</option>
+                        </select>
+                    </div>
+                    <canvas id="revenueChart" height="120"></canvas>
+                </div>
+
+                <!-- Booking Status Pie -->
+                <div class="bg-white rounded-2xl shadow-sm p-6">
+                    <h3 class="font-bold text-gray-800 text-lg mb-6">Booking Distribution</h3>
+                    <canvas id="statusChart" height="200"></canvas>
+                    <div class="mt-4 space-y-2">
+                        <div class="flex items-center justify-between text-sm">
+                            <div class="flex items-center gap-2"><div class="w-3 h-3 bg-amber-500 rounded-full"></div> Pending</div>
+                            <span class="font-bold">3</span>
+                        </div>
+                        <div class="flex items-center justify-between text-sm">
+                            <div class="flex items-center gap-2"><div class="w-3 h-3 bg-blue-500 rounded-full"></div> Upcoming</div>
+                            <span class="font-bold">8</span>
+                        </div>
+                        <div class="flex items-center justify-between text-sm">
+                            <div class="flex items-center gap-2"><div class="w-3 h-3 bg-green-500 rounded-full"></div> Ongoing</div>
+                            <span class="font-bold">5</span>
+                        </div>
+                        <div class="flex items-center justify-between text-sm">
+                            <div class="flex items-center gap-2"><div class="w-3 h-3 bg-emerald-500 rounded-full"></div> Complete</div>
+                            <span class="font-bold">142</span>
+                        </div>
+                        <div class="flex items-center justify-between text-sm">
+                            <div class="flex items-center gap-2"><div class="w-3 h-3 bg-red-500 rounded-full"></div> Canceled</div>
+                            <span class="font-bold">12</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Popular Cars & Recent Bookings -->
+            <div class="grid lg:grid-cols-2 gap-6 mb-8">
+
+                <!-- Most & Least Popular Cars -->
+                <div class="bg-white rounded-2xl shadow-sm p-6">
+                    <h3 class="font-bold text-gray-800 text-lg mb-6">
+                        <i class="fas fa-fire text-orange-500 mr-2"></i>Most & Least Popular Cars
+                    </h3>
+
+                    <!-- Most Popular -->
+                    <div class="mb-6">
+                        <h4 class="text-sm font-semibold text-green-600 uppercase tracking-wider mb-3">
+                            <i class="fas fa-arrow-up mr-1"></i> Most Rented
+                        </h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-4">
+                                <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center text-green-600 font-bold text-sm">1</div>
+                                <div class="flex-1">
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-medium text-gray-800 text-sm">Toyota Camry 2024</span>
+                                        <span class="text-sm text-gray-500">42 bookings</span>
+                                    </div>
+                                    <div class="w-full bg-gray-100 rounded-full h-2 mt-1">
+                                        <div class="bg-green-500 h-2 rounded-full" style="width: 85%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center text-green-600 font-bold text-sm">2</div>
+                                <div class="flex-1">
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-medium text-gray-800 text-sm">Honda CR-V 2024</span>
+                                        <span class="text-sm text-gray-500">38 bookings</span>
+                                    </div>
+                                    <div class="w-full bg-gray-100 rounded-full h-2 mt-1">
+                                        <div class="bg-green-400 h-2 rounded-full" style="width: 75%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center text-green-600 font-bold text-sm">3</div>
+                                <div class="flex-1">
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-medium text-gray-800 text-sm">Mercedes C300 2024</span>
+                                        <span class="text-sm text-gray-500">29 bookings</span>
+                                    </div>
+                                    <div class="w-full bg-gray-100 rounded-full h-2 mt-1">
+                                        <div class="bg-green-300 h-2 rounded-full" style="width: 58%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Least Popular -->
+                    <div>
+                        <h4 class="text-sm font-semibold text-red-600 uppercase tracking-wider mb-3">
+                            <i class="fas fa-arrow-down mr-1"></i> Least Rented
+                        </h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-4">
+                                <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center text-red-600 font-bold text-sm">1</div>
+                                <div class="flex-1">
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-medium text-gray-800 text-sm">BMW M4 Competition</span>
+                                        <span class="text-sm text-gray-500">8 bookings</span>
+                                    </div>
+                                    <div class="w-full bg-gray-100 rounded-full h-2 mt-1">
+                                        <div class="bg-red-500 h-2 rounded-full" style="width: 16%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center text-red-600 font-bold text-sm">2</div>
+                                <div class="flex-1">
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-medium text-gray-800 text-sm">Mazda CX-5 2023</span>
+                                        <span class="text-sm text-gray-500">12 bookings</span>
+                                    </div>
+                                    <div class="w-full bg-gray-100 rounded-full h-2 mt-1">
+                                        <div class="bg-red-400 h-2 rounded-full" style="width: 24%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center text-red-600 font-bold text-sm">3</div>
+                                <div class="flex-1">
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-medium text-gray-800 text-sm">Toyota Alphard 2023</span>
+                                        <span class="text-sm text-gray-500">15 bookings</span>
+                                    </div>
+                                    <div class="w-full bg-gray-100 rounded-full h-2 mt-1">
+                                        <div class="bg-red-300 h-2 rounded-full" style="width: 30%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Bookings Table -->
+                <div class="bg-white rounded-2xl shadow-sm p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="font-bold text-gray-800 text-lg">
+                            <i class="fas fa-history text-primary mr-2"></i>Recent Bookings
+                        </h3>
+                        <a href="bookings.html" class="text-sm text-primary hover:text-primary-dark font-medium">View All</a>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-xl transition">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-blue-500"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-medium text-gray-800 text-sm">Ahmad Razali</span>
+                                    <span class="bg-blue-100 text-blue-600 text-xs font-bold px-2 py-0.5 rounded-full">Upcoming</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-0.5">Toyota Camry 2024 &bull; Jul 15-18</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-xl transition">
+                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-green-500"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-medium text-gray-800 text-sm">Siti Nurhaliza</span>
+                                    <span class="bg-green-100 text-green-600 text-xs font-bold px-2 py-0.5 rounded-full">Ongoing</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-0.5">Honda CR-V 2024 &bull; Jul 8-14</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-xl transition">
+                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-green-500"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-medium text-gray-800 text-sm">Muhammad Faiz</span>
+                                    <span class="bg-green-100 text-green-600 text-xs font-bold px-2 py-0.5 rounded-full">Ongoing</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-0.5">BMW M4 Competition &bull; Jul 10-12</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-xl transition">
+                            <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-check text-emerald-500"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-medium text-gray-800 text-sm">Lim Wei Ming</span>
+                                    <span class="bg-emerald-100 text-emerald-600 text-xs font-bold px-2 py-0.5 rounded-full">Complete</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-0.5">Mercedes C300 2024 &bull; Jul 1-5</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-xl transition">
+                            <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-times text-red-500"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-medium text-gray-800 text-sm">Priya Sharma</span>
+                                    <span class="bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full">Canceled</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-0.5">Toyota Alphard 2023 &bull; Jul 3-5</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-xl transition">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-blue-500"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-medium text-gray-800 text-sm">Tan Kah Hoe</span>
+                                    <span class="bg-blue-100 text-blue-600 text-xs font-bold px-2 py-0.5 rounded-full">Upcoming</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-0.5">Mazda CX-5 2023 &bull; Jul 20-23</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hourly Notification Check -->
+            <div class="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl shadow-lg p-6 text-white mb-8">
+                <div class="flex items-start gap-4">
+                    <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-bell text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg mb-1">Hourly Notification Check Active</h3>
+                        <p class="text-amber-100 text-sm leading-relaxed">
+                            The system checks every hour for bookings needing attention:
+                            <strong>pending payments</strong>, <strong>overdue pickups</strong>, and <strong>overdue returns</strong>.
+                            Click any notification below to view booking details or contact the customer directly.
+                        </p>
+                        <div class="flex gap-2 mt-4">
+                            <span class="bg-white/20 text-xs px-3 py-1 rounded-full">Last check: Just now</span>
+                            <span class="bg-green-400/30 text-xs px-3 py-1 rounded-full">Monitoring active</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Log -->
+            <div class="bg-white rounded-2xl shadow-sm p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-bold text-gray-800 text-lg">
+                        <i class="fas fa-history text-primary mr-2"></i>Activity Log
+                    </h3>
+                    <span class="bg-gray-100 text-gray-600 text-xs font-medium px-3 py-1 rounded-full">Recent 10</span>
+                </div>
+                <div class="space-y-3" id="activityLog">
+                    <div class="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-xl transition">
+                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fas fa-plus text-green-500 text-xs"></i></div>
+                        <div class="flex-1">
+                            <div class="text-sm text-gray-800"><span class="font-semibold">Admin User</span> created booking <span class="font-mono text-primary">ACR-20260711-0003</span></div>
+                            <div class="text-xs text-gray-400 mt-0.5">Today, 10:30 AM — Ahmad Razali, Toyota Camry 2024</div>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-xl transition">
+                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fas fa-edit text-blue-500 text-xs"></i></div>
+                        <div class="flex-1">
+                            <div class="text-sm text-gray-800"><span class="font-semibold">Staff Ahmad</span> edited booking <span class="font-mono text-primary">ACR-20260708-0002</span></div>
+                            <div class="text-xs text-gray-400 mt-0.5">Today, 9:15 AM — Updated rental period, Siti Nurhaliza</div>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-xl transition">
+                        <div class="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fas fa-exchange-alt text-amber-500 text-xs"></i></div>
+                        <div class="flex-1">
+                            <div class="text-sm text-gray-800"><span class="font-semibold">Admin User</span> changed status of <span class="font-mono text-primary">ACR-20260705-0001</span> to <span class="font-bold text-green-600">ongoing</span></div>
+                            <div class="text-xs text-gray-400 mt-0.5">Yesterday, 2:00 PM — Muhammad Faiz, BMW M4 Competition</div>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-xl transition">
+                        <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fas fa-times text-red-500 text-xs"></i></div>
+                        <div class="flex-1">
+                            <div class="text-sm text-gray-800"><span class="font-semibold">Staff Ahmad</span> canceled booking <span class="font-mono text-primary">ACR-20260703-0005</span></div>
+                            <div class="text-xs text-gray-400 mt-0.5">Yesterday, 11:00 AM — Priya Sharma, Toyota Alphard 2023</div>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-xl transition">
+                        <div class="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fas fa-check text-emerald-500 text-xs"></i></div>
+                        <div class="flex-1">
+                            <div class="text-sm text-gray-800"><span class="font-semibold">Admin User</span> marked booking <span class="font-mono text-primary">ACR-20260701-0004</span> as <span class="font-bold text-emerald-600">complete</span></div>
+                            <div class="text-xs text-gray-400 mt-0.5">Jul 5, 5:30 PM — Lim Wei Ming, Mercedes C300 2024</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Done Confirmation Modal -->
+    <div id="doneModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-check text-green-500 text-3xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 text-center mb-2">Mark as Done?</h3>
+            <p class="text-gray-500 text-sm text-center mb-1" id="doneModalTitle"></p>
+            <p class="text-gray-400 text-xs text-center mb-6" id="doneModalDetail"></p>
+            <div class="flex gap-3">
+                <button onclick="dismissNotification(false)" class="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl font-medium hover:bg-gray-50 transition">
+                    <i class="fas fa-check mr-1"></i> Done
+                </button>
+                <button onclick="openReminderPicker()" class="flex-1 px-4 py-2.5 bg-primary hover:bg-blue-700 text-white rounded-xl font-medium transition">
+                    <i class="fas fa-clock mr-1"></i> Done + Reminder
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reminder Time Picker Modal -->
+    <div id="reminderModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6">
+            <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-clock text-amber-500 text-3xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 text-center mb-1">Set Reminder</h3>
+            <p class="text-gray-400 text-xs text-center mb-4" id="reminderModalRef"></p>
+            <div class="grid grid-cols-2 gap-2 mb-4">
+                <button onclick="setQuickReminder(1, 'hours')" class="px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-medium hover:bg-primary/10 hover:border-primary transition">In 1 hour</button>
+                <button onclick="setQuickReminder(3, 'hours')" class="px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-medium hover:bg-primary/10 hover:border-primary transition">In 3 hours</button>
+                <button onclick="setQuickReminder(6, 'hours')" class="px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-medium hover:bg-primary/10 hover:border-primary transition">In 6 hours</button>
+                <button onclick="setQuickReminder(1, 'day')" class="px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-medium hover:bg-primary/10 hover:border-primary transition">Tomorrow 9AM</button>
+                <button onclick="setQuickReminder(3, 'days')" class="px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-medium hover:bg-primary/10 hover:border-primary transition">In 3 days</button>
+                <button onclick="setQuickReminder(7, 'days')" class="px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-medium hover:bg-primary/10 hover:border-primary transition">Next Week</button>
+            </div>
+            <div class="border-t pt-4">
+                <p class="text-xs text-gray-500 text-center mb-3">Or pick a custom time:</p>
+                <div class="flex gap-2">
+                    <input type="date" id="customReminderDate" class="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary">
+                    <input type="time" id="customReminderTime" class="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary">
+                </div>
+                <button onclick="setCustomReminder()" class="w-full mt-3 px-4 py-2.5 bg-primary hover:bg-blue-700 text-white rounded-xl font-medium transition text-sm">
+                    <i class="fas fa-clock mr-1"></i> Set Custom Reminder
+                </button>
+            </div>
+            <button onclick="closeReminderModal()" class="w-full mt-3 text-gray-400 hover:text-gray-600 text-sm transition">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        // === NOTIFICATION DATA ===
+        const actionNotifications = [
+            { type:'payment', ref:'ACR-20260711-0001', name:'Ahmad Razali', phone:'60123456789', vehicle:'Toyota Camry 2024', amount:'RM 450', detail:'pending since Jul 11', color:'amber', icon:'fa-money-bill-wave' },
+            { type:'pickup', ref:'ACR-20260710-0002', name:'Siti Nurhaliza', phone:'60134567890', vehicle:'Honda CR-V 2024', amount:'', detail:'pickup was Jul 8, still marked as Upcoming', color:'blue', icon:'fa-hand-holding-keys' },
+            { type:'return', ref:'ACR-20260710-0003', name:'Muhammad Faiz', phone:'60145678901', vehicle:'BMW M4 Competition', amount:'', detail:'return was Jul 10, still marked as Ongoing', color:'orange', icon:'fa-car' }
+        ];
+
+        // === DISMISSED NOTIFICATIONS (localStorage) ===
+        function loadDismissed() {
+            try { return JSON.parse(localStorage.getItem('anbelDismissedNotifs')) || []; }
+            catch { return []; }
+        }
+        function saveDismissed(arr) {
+            localStorage.setItem('anbelDismissedNotifs', JSON.stringify(arr));
+        }
+        function isNotifVisible(key) {
+            const dismissed = loadDismissed();
+            const entry = dismissed.find(d => d.key === key);
+            if (!entry) return true;
+            if (!entry.remindAt) return false;
+            return new Date(entry.remindAt) <= new Date();
+        }
+
+        // === RENDER ACTION REQUIRED ===
+        function renderActionRequired() {
+            const container = document.getElementById('actionList');
+            const emptyState = document.getElementById('actionEmpty');
+            let html = '';
+            let count = 0;
+
+            actionNotifications.forEach(n => {
+                const key = n.type + '-' + n.ref;
+                if (!isNotifVisible(key)) return;
+                count++;
+
+                const title = n.type === 'payment' ? 'Payment Reminder' : n.type === 'pickup' ? 'Pickup Follow-up' : 'Return Follow-up';
+                const phoneLink = 'https://wa.me/' + n.phone + '?text=' + encodeURIComponent(
+                    n.type === 'payment'
+                        ? 'Hi ' + n.name + ', this is a reminder that payment for booking ' + n.ref + ' (Amount: ' + n.amount + ') is still pending. Kindly arrange payment at your earliest convenience. Thank you — Anbel Car Rental'
+                        : n.type === 'pickup'
+                        ? 'Hi ' + n.name + ', we noticed your vehicle (' + n.vehicle + ') for booking ' + n.ref + ' is ready for pickup. Please arrange to collect it at your earliest convenience. Thank you — Anbel Car Rental'
+                        : 'Hi ' + n.name + ', this is a friendly reminder that your rental period for ' + n.vehicle + ' (Booking: ' + n.ref + ') has ended. Please return the vehicle at your earliest convenience. Thank you — Anbel Car Rental'
+                );
+
+                html += '<div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 p-4 bg-' + n.color + '-50 border border-' + n.color + '-200 rounded-xl cursor-pointer hover:bg-' + n.color + '-100 transition" onclick="window.location.href=\'bookings.html?ref=' + n.ref + '\'">' +
+                    '<div class="w-10 h-10 bg-' + n.color + '-100 rounded-full flex items-center justify-center flex-shrink-0"><i class="fas ' + n.icon + ' text-' + n.color + '-500"></i></div>' +
+                    '<div class="flex-1 min-w-0">' +
+                        '<div class="font-medium text-gray-800 text-sm">' + title + ': ' + n.ref + '</div>' +
+                        '<div class="text-xs text-gray-500 mt-0.5">' + n.name + ' — ' + n.vehicle + ' — ' + n.detail + (n.amount ? ' — ' + n.amount : '') + '</div>' +
+                    '</div>' +
+                    '<div class="flex flex-wrap gap-1.5 flex-shrink-0 w-full sm:w-auto" onclick="event.stopPropagation()">' +
+                        '<button onclick="copyReminder(\'' + n.type + '\', \'' + n.name + '\', \'' + n.ref + '\', \'' + (n.amount || n.vehicle) + '\')" class="bg-white border border-' + n.color + '-300 text-' + n.color + '-700 px-2.5 py-1.5 rounded-lg text-xs font-medium hover:bg-' + n.color + '-100 transition" title="Copy message"><i class="fas fa-copy"></i></button>' +
+                        '<a href="' + phoneLink + '" target="_blank" class="bg-green-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-medium hover:bg-green-600 transition" title="Send WhatsApp"><i class="fab fa-whatsapp"></i></a>' +
+                        '<a href="bookings.html?ref=' + n.ref + '" class="bg-primary text-white px-2.5 py-1.5 rounded-lg text-xs font-medium hover:bg-blue-700 transition" title="View booking"><i class="fas fa-external-link-alt"></i></a>' +
+                        '<button onclick="openDoneModal(\'' + n.type + '\', \'' + n.ref + '\', \'' + n.name + '\', \'' + n.vehicle + (n.amount ? ' — ' + n.amount : '') + '\')" class="bg-white border border-gray-300 text-gray-600 px-2.5 py-1.5 rounded-lg text-xs font-medium hover:bg-gray-100 transition" title="Mark done"><i class="fas fa-check"></i></button>' +
+                    '</div>' +
+                '</div>';
+            });
+
+            container.innerHTML = html;
+            emptyState.classList.toggle('hidden', count > 0);
+            document.getElementById('actionCount').textContent = count + ' item' + (count !== 1 ? 's' : '');
+            document.getElementById('actionCount').classList.toggle('hidden', count === 0);
+        }
+
+        // === DONE MODAL ===
+        let doneModalData = {};
+        function openDoneModal(type, ref, name, detail) {
+            doneModalData = { type, ref, name, detail };
+            document.getElementById('doneModalTitle').textContent = (type === 'payment' ? 'Payment Reminder' : type === 'pickup' ? 'Pickup Follow-up' : 'Return Follow-up') + ': ' + ref;
+            document.getElementById('doneModalDetail').textContent = name + ' — ' + detail;
+            document.getElementById('doneModal').classList.remove('hidden');
+            document.getElementById('doneModal').classList.add('flex');
+        }
+        function closeDoneModal() {
+            document.getElementById('doneModal').classList.add('hidden');
+            document.getElementById('doneModal').classList.remove('flex');
+            doneModalData = {};
+        }
+
+        // === DISMISS / REMIND ===
+        function dismissNotification(hasReminder) {
+            if (!hasReminder) {
+                const key = doneModalData.type + '-' + doneModalData.ref;
+                let dismissed = loadDismissed();
+                dismissed = dismissed.filter(d => d.key !== key);
+                dismissed.push({ key: key, type: doneModalData.type, ref: doneModalData.ref, dismissedAt: new Date().toISOString(), remindAt: null });
+                saveDismissed(dismissed);
+                closeDoneModal();
+                renderActionRequired();
+                showToast('Notification dismissed');
+            }
+        }
+        function openReminderPicker() {
+            document.getElementById('doneModal').classList.add('hidden');
+            document.getElementById('doneModal').classList.remove('flex');
+            document.getElementById('reminderModalRef').textContent = doneModalData.type + ' — ' + doneModalData.ref;
+            const now = new Date();
+            const dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+            document.getElementById('customReminderDate').value = dateStr;
+            document.getElementById('customReminderDate').min = dateStr;
+            document.getElementById('customReminderTime').value = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+            document.getElementById('reminderModal').classList.remove('hidden');
+            document.getElementById('reminderModal').classList.add('flex');
+        }
+        function closeReminderModal() {
+            document.getElementById('reminderModal').classList.add('hidden');
+            document.getElementById('reminderModal').classList.remove('flex');
+            doneModalData = {};
+        }
+        function saveReminder(remindAt) {
+            const key = doneModalData.type + '-' + doneModalData.ref;
+            let dismissed = loadDismissed();
+            dismissed = dismissed.filter(d => d.key !== key);
+            dismissed.push({ key: key, type: doneModalData.type, ref: doneModalData.ref, dismissedAt: new Date().toISOString(), remindAt: remindAt.toISOString(), fired: false });
+            saveDismissed(dismissed);
+            closeReminderModal();
+            renderActionRequired();
+            showToast('Reminder set for ' + remindAt.toLocaleString());
+        }
+        function setQuickReminder(amount, unit) {
+            const now = new Date();
+            let remindAt;
+            if (unit === 'hours') {
+                remindAt = new Date(now.getTime() + amount * 60 * 60 * 1000);
+            } else if (unit === 'day') {
+                remindAt = new Date(now);
+                remindAt.setDate(remindAt.getDate() + 1);
+                remindAt.setHours(9, 0, 0, 0);
+            } else {
+                remindAt = new Date(now.getTime() + amount * 24 * 60 * 60 * 1000);
+            }
+            saveReminder(remindAt);
+        }
+        function setCustomReminder() {
+            const dateVal = document.getElementById('customReminderDate').value;
+            const timeVal = document.getElementById('customReminderTime').value;
+            if (!dateVal || !timeVal) { showToast('Please select both date and time'); return; }
+            const remindAt = new Date(dateVal + 'T' + timeVal + ':00');
+            if (remindAt <= new Date()) { showToast('Please select a future time'); return; }
+            saveReminder(remindAt);
+        }
+
+        // === CHECK REMINDERS (every 60s) ===
+        function checkReminders() {
+            const dismissed = loadDismissed();
+            let changed = false;
+            dismissed.forEach(entry => {
+                if (entry.remindAt && !entry.fired && new Date(entry.remindAt) <= new Date()) {
+                    entry.fired = true;
+                    changed = true;
+                    const title = entry.type === 'payment' ? 'Payment Reminder' : entry.type === 'pickup' ? 'Pickup Follow-up' : 'Return Follow-up';
+                    showToast('Reminder: ' + title + ' for ' + entry.ref);
+                }
+            });
+            if (changed) {
+                saveDismissed(dismissed);
+                renderActionRequired();
+            }
+        }
+        setInterval(checkReminders, 60000);
+
+        // === COPY REMINDER ===
+        function copyReminder(type, name, ref, detail) {
+            let message = '';
+            if (type === 'payment') {
+                message = 'Hi ' + name + ', this is a reminder that payment for booking ' + ref + ' (Amount: ' + detail + ') is still pending. Kindly arrange payment at your earliest convenience. Thank you — Anbel Car Rental';
+            } else if (type === 'pickup') {
+                message = 'Hi ' + name + ', we noticed your vehicle (' + detail + ') for booking ' + ref + ' is ready for pickup. Please arrange to collect it at your earliest convenience. Thank you — Anbel Car Rental';
+            } else if (type === 'return') {
+                message = 'Hi ' + name + ', this is a friendly reminder that your rental period for ' + detail + ' (Booking: ' + ref + ') has ended. Please return the vehicle at your earliest convenience. Thank you — Anbel Car Rental';
+            }
+            navigator.clipboard.writeText(message).then(() => {
+                showToast('Message copied to clipboard!');
+            }).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = message;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                showToast('Message copied to clipboard!');
+            });
+        }
+
+        // Toast notification
+        function showToast(msg) {
+            const existing = document.querySelector('.toast-notification');
+            if (existing) existing.remove();
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification fixed bottom-6 right-6 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3 z-50';
+            toast.innerHTML = '<i class="fas fa-check-circle text-xl"></i><span class="font-medium">' + msg + '</span>';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // === INIT ===
+        RBAC.init();
+        renderActionRequired();
+
+        // Revenue Chart
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        new Chart(revenueCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [{
+                    label: 'Revenue (RM)',
+                    data: [28000, 32000, 29500, 35000, 41000, 38450, 0, 0, 0, 0, 0, 0],
+                    borderColor: '#1e40af',
+                    backgroundColor: 'rgba(30, 64, 175, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#1e40af',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { callback: val => 'RM ' + (val/1000) + 'k', color: '#6b7280' },
+                        grid: { color: '#f3f4f6' }
+                    },
+                    x: {
+                        ticks: { color: '#6b7280' },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+
+        // Status Doughnut Chart
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Pending', 'Upcoming', 'Ongoing', 'Complete', 'Canceled'],
+                datasets: [{
+                    data: [3, 8, 5, 142, 12],
+                    backgroundColor: ['#f59e0b', '#3b82f6', '#22c55e', '#10b981', '#ef4444'],
+                    borderWidth: 0,
+                    hoverOffset: 8,
+                }]
+            },
+            options: {
+                responsive: true,
+                cutout: '65%',
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    </script>
+    <script src="js/rbac.js"></script>
+    <script src="js/sidebar.js"></script>
+</body>
+</html>
